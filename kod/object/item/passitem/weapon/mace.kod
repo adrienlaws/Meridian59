@@ -52,6 +52,7 @@ classvars:
    viGround_group = 1
    viInventory_group = 3
    viBroken_group = 2
+   viHurt_group = 4
 
 properties:
 
@@ -59,5 +60,34 @@ properties:
 
 messages:
 
+
+   SendLookAnimation()
+   {
+      if piHits > 0 OR viBroken_group = $
+      {
+         AddPacket(1,ANIMATE_NONE, 2,viHurt_group);
+      }
+      else
+      {
+         AddPacket(1,ANIMATE_NONE, 2,viBroken_group);
+      }
+      
+      return;
+   }
+
+
+   SendInventoryAnimation()
+   {
+      if piHits > 0 OR viBroken_group = $
+      {
+         AddPacket(1,ANIMATE_NONE, 2,viHurt_group);
+      }
+      else
+      {
+         AddPacket(1,ANIMATE_NONE, 2,viBroken_group);
+      }
+      
+      return;
+   }
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
