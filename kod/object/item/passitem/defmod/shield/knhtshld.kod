@@ -45,6 +45,9 @@ classvars:
 
    viGround_group = 3
    viInventory_group = 1
+   viGood_group = 5
+   viMed_group  = 6
+   viPoor_group = 7
 
    viDefense_base = 15
    viDamage_base = 2
@@ -60,6 +63,51 @@ messages:
              ];
    }
 
+
+   SendLookAnimation()
+   {
+      local iHitsPercent;
+      iHitsPercent = (100 * piHits) / piHits_init;
+      if iHitsPercent > 90
+      {
+         AddPacket(1,ANIMATE_NONE, 2,viInventory_group);
+      }
+      else
+      {
+         % update local bitmap to reflect changing hit % levels for breaking items
+         if iHitsPercent > 65
+         {
+            AddPacket(1,ANIMATE_NONE, 2,viGood_group);
+         }
+         else
+         {
+            if iHitsPercent > 30
+            {
+               AddPacket(1,ANIMATE_NONE, 2,viMed_group);
+            }
+            else
+            {
+               if piHits > 0
+               {
+                  AddPacket(1,ANIMATE_NONE, 2,viPoor_group);
+               }
+               else
+               {
+                  AddPacket(1,ANIMATE_NONE, 2,viBroken_group);
+               }
+            }
+         }
+      }
+      
+      return;
+   }
+
+   SendInventoryAnimation()
+   {
+      Send(self,@SendLookAnimation);
+
+      return;
+   }
 
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
