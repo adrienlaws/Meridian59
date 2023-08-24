@@ -132,6 +132,7 @@ messages:
 
       Send(oTarget,@SetMaxHits,#number=iAmount);      
       Send(oTarget,@SetHits,#number=iAmount);
+      Send(Send(oTarget,@GetOwner),@SomethingChanged,#what=oTarget);
       Send(who,@MsgSendUser,#message_rsc=mend_working, 
            #parm1=Send(oTarget,@GetDef),#parm2=Send(oTarget,@GetName));
 
