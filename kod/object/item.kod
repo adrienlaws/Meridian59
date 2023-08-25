@@ -646,7 +646,6 @@ messages:
       {
          piHits = piHits - 1;
       }
-
       if piHits <= 0
       {
          Send(self,@ItemBrokenInBattle);
