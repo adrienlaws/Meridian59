@@ -641,22 +641,11 @@ messages:
 
    DefendingHit(who = $,what = $)
    {
-      %local iHitsPercent;
-
       % Set to 75% currently
       if random(1,100) < ARMOR_TAKE_DAMAGE_PCT   
       {
          piHits = piHits - 1;
-         Send(poOwner,@SomethingChanged,#what=self);
       }
-      
-%      iHitsPercent = (100 * piHits) / piHits_init;
-      % update local bitmap to reflect changing hit % levels for breaking items
-%      if iHitsPercent = 65
-%         OR iHitsPercent = 30
-%      {
-%         Send(poOwner,@SomethingChanged,#what=self);
-%      }
 
       if piHits <= 0
       {
