@@ -63,49 +63,61 @@ messages:
              ];
    }
 
-
-   SendLookAnimation()
+   DefendingHit()
    {
-      local iHitsPercent;
-      iHitsPercent = (100 * piHits) / piHits_init;
-      if iHitsPercent > 90
-      {
-         AddPacket(1,ANIMATE_NONE, 2,viInventory_group);
-      }
-      else
-      {
-         % update local bitmap to reflect changing hit % levels for breaking items
-         if iHitsPercent > 65
-         {
-            AddPacket(1,ANIMATE_NONE, 2,viGood_group);
-         }
-         else
-         {
-            if iHitsPercent > 30
-            {
-               AddPacket(1,ANIMATE_NONE, 2,viMed_group);
-            }
-            else
-            {
-               if piHits > 0
-               {
-                  AddPacket(1,ANIMATE_NONE, 2,viPoor_group);
-               }
-               else
-               {
-                  AddPacket(1,ANIMATE_NONE, 2,viBroken_group);
-               }
-            }
-         }
-      }
-      
-      return;
+      % check if item graphic needs updating upon being hit
+      Post(poOwner,@SomethingChanged,#what=self);
+      propagate;
    }
 
    SendInventoryAnimation()
    {
       Send(self,@SendLookAnimation);
+      return;
+   }
 
+   SendLookAnimation()
+   {
+      local iHitsPercent;
+      % add color translation packet for colored items
+      if (piItem_flags & ITEM_PALETTE_MASK) <> 0
+      {
+         AddPacket(1,ANIMATE_TRANSLATION, 1,piItem_flags&ITEM_PALETTE_MASK);
+      }
+
+      % calculate the health percentage of an item
+      iHitsPercent = (100 * piHits) / piHits_init;
+
+      % check item health % to present appropriately "worn" graphic
+      if iHitsPercent > 90
+      {
+         AddPacket(1,ANIMATE_NONE,2,viInventory_group);
+      }
+      else
+      {
+         if iHitsPercent > 65 AND viGood_group <> $
+         {
+            AddPacket(1,ANIMATE_NONE,2,viGood_group);
+         }
+         else
+         {
+            if iHitsPercent > 30 AND viMed_group <> $
+            {
+               AddPacket(1,ANIMATE_NONE,2,viMed_group);
+            }
+            else
+            {
+               if piHits > 0 AND viPoor_group <> $
+               {
+                  AddPacket(1,ANIMATE_NONE,2,viPoor_group);
+               }
+               else
+               {
+                  AddPacket(1,ANIMATE_NONE,2,viBroken_group);
+               }
+            }
+         }
+      }
       return;
    }
 
