@@ -24,6 +24,8 @@ resources:
 
 classvars:
 
+   viObject_flags = OF_SIGN | OF_DISPLAY_NAME
+
 properties:
 
    vrName = sign_name_rsc
@@ -73,6 +75,15 @@ messages:
    ReqNewOwner(what = $)
    {
       return False;
+   }
+
+   SendLightingInformation()
+   {
+      AddPacket(2,(LIGHT_FLAG_ON | LIGHT_FLAG_DYNAMIC));
+      AddPacket(1,255);
+      AddPacket(2,LIGHT_BWHITE);
+
+      return;
    }
 
 end
