@@ -40,13 +40,17 @@
    ACTIVE = 1
    PASSIVE = 2
 
+   %%% MoveOn type enum, now separate from object flags.
+   MOVEON_YES        = 0
+   MOVEON_NO         = 1
+   MOVEON_TELEPORTER = 2
+   MOVEON_NOTIFY     = 3
+
    %%% Object flags for client
 
    % 0's are default value
-   MOVEON_YES        = 0
-   MOVEON_NO         = 0x00000001
-   MOVEON_TELEPORTER = 0x00000002
-   MOVEON_NOTIFY     = 0x00000003
+   OF_DISPLAY_NAME   = 0x00000001
+   OF_SIGN           = 0x00000002
    USER_NO           = 0
    USER_YES          = 0x00000004
    BATTLER_NO        = 0
@@ -117,7 +121,6 @@
    PLAYER_EVENT      = 0x1C000
 
    % What is the target, according to the viewer?  Used for special flagging.
-   PLAYER_IS_ENEMY      = 0x02000000
    PLAYER_IS_FRIEND     = 0x04000000
    PLAYER_IS_GUILDMATE  = 0x08000000
 
