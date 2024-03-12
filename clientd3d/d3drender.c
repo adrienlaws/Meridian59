@@ -3346,11 +3346,11 @@ void D3DRenderNamesDraw3D(d3d_render_cache_system *pCacheSystem, d3d_render_pool
       
       room_contents_node *pRNode = (room_contents_node *)list->data;
 
-		if (pRNode->obj.id == player.id)
-			continue;
-
-		if (!(pRNode->obj.flags & OF_PLAYER) || (GetDrawingEffect(pRNode->obj.flags) == OF_INVISIBLE))
-			continue;
+		if (pRNode->obj.id == player.id
+    	|| (!(pRNode->obj.flags & OF_SIGN) && !(pRNode->obj.flags & OF_PLAYER))
+		|| (GetDrawingEffect(pRNode->obj.flags) == OF_INVISIBLE)
+		|| !(pRNode->obj.flags & OF_DISPLAY_NAME))
+   			continue;
 
 		vector.x = pRNode->motion.x - player.x;
 		vector.y = pRNode->motion.y - player.y;
