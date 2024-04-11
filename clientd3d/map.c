@@ -29,7 +29,9 @@
 #define MAP_OBJECT_COLOR        PALETTERGB(255, 0, 0)
 
 #define MAP_FRIEND_COLOR        PALETTERGB(0, 255, 0)
+#define MAP_OUTLAW_COLOR        PALETTERGB(252, 128, 0)
 #define MAP_ENEMY_COLOR         PALETTERGB(255, 0, 0)
+#define MAP_ADMIN_COLOR         PALETTERGB(255, 255, 0)
 #define MAP_GUILDMATE_COLOR     PALETTERGB(255, 255, 0)
 
 #define MAP_OBJECT_RADIUS (FINENESS / 6)  // Radius of circle drawn for an object
@@ -43,7 +45,7 @@
 
 static HBRUSH hObjectBrush, hPlayerBrush, hNullBrush;
 static HPEN hWallPen, hPlayerPen, hObjectPen;
-static HPEN hFriendPen, hEnemyPen, hGuildmatePen;
+static HPEN hFriendPen, hEnemyPen, hOutlawPen, hGuildmatePen, hAdminPen;
 
 static float zoom;              // Factor to zoom in on map
 
@@ -130,7 +132,9 @@ void MapInitialize(void)
    hPlayerPen = CreatePen(PS_SOLID, MAP_PLAYER_THICKNESS, MAP_PLAYER_COLOR);
    hObjectPen = CreatePen(PS_SOLID, MAP_OBJECT_THICKNESS, MAP_OBJECT_COLOR);
    hFriendPen = CreatePen(PS_SOLID, MAP_PLAYER_THICKNESS, MAP_FRIEND_COLOR);
+   hOutlawPen = CreatePen(PS_SOLID, MAP_PLAYER_THICKNESS, MAP_OUTLAW_COLOR);
    hEnemyPen = CreatePen(PS_SOLID, MAP_PLAYER_THICKNESS, MAP_ENEMY_COLOR);
+   hAdminPen = CreatePen(PS_SOLID, MAP_PLAYER_THICKNESS, MAP_ADMIN_COLOR);
    hGuildmatePen = CreatePen(PS_SOLID, MAP_PLAYER_THICKNESS, MAP_GUILDMATE_COLOR);
    
    hObjectBrush = CreateSolidBrush(MAP_OBJECT_COLOR);
@@ -162,7 +166,9 @@ void MapClose(void)
    DeleteObject(hPlayerPen);
    DeleteObject(hObjectPen);
    DeleteObject(hFriendPen);
+   DeleteObject(hOutlawPen);
    DeleteObject(hEnemyPen);
+   DeleteObject(hAdminPen);
    DeleteObject(hGuildmatePen);
 
    DeleteObject(hObjectBrush);
@@ -405,13 +411,17 @@ void MapDrawObjects(HDC hdc, list_type objects, int x, int y, float scale)
       {
           float ring_radius = 2.0f * radius;
 
-          // Guildmate?
+         // Admin
           SelectObject(hdc, hPlayerBrush);
-          if (r->obj.flags & OF_GUILDMATE)
+          if (r->obj.flags & (PF_DM | PF_CREATOR | PF_SUPER))
           {
-              ring_radius = 3.0f * radius;
+              SelectObject(hdc, hAdminPen);
+              Ellipse(hdc, (int) (new_x - ring_radius),
+                      (int) (new_y - ring_radius), 
+                      (int) (new_x + ring_radius),
+                      (int) (new_y + ring_radius));
           }
-
+          
           // Friend?
           if (r->obj.flags & OF_FRIEND)
           {
@@ -424,6 +434,30 @@ void MapDrawObjects(HDC hdc, list_type objects, int x, int y, float scale)
 
           // Enemy?
           if (r->obj.flags & OF_ENEMY)
+         {
+              SelectObject(hdc, hEnemyPen);
+              Ellipse(hdc, (int) (new_x - ring_radius),
+                      (int) (new_y - ring_radius), 
+                      (int) (new_x + ring_radius),
+                      (int) (new_y + ring_radius));
+          }
+
+          // Outlaw but not Guildmate or Friend or DM?
+          if (((r->obj.flags & PF_OUTLAW)&& !(r->obj.flags & PF_DM)) &&
+               !(r->obj.flags & OF_GUILDMATE) &&
+               !(r->obj.flags & OF_FRIEND))
+          {
+              SelectObject(hdc, hOutlawPen);
+              Ellipse(hdc, (int) (new_x - ring_radius),
+                      (int) (new_y - ring_radius), 
+                      (int) (new_x + ring_radius),
+                      (int) (new_y + ring_radius));
+          }
+
+          // Murderer but not Guildmate or Friend or DM?
+          if (((r->obj.flags & PF_KILLER) && !(r->obj.flags & PF_DM)) &&
+               !(r->obj.flags & OF_GUILDMATE) &&
+               !(r->obj.flags & OF_FRIEND))
           {
               SelectObject(hdc, hEnemyPen);
               Ellipse(hdc, (int) (new_x - ring_radius),
@@ -432,15 +466,14 @@ void MapDrawObjects(HDC hdc, list_type objects, int x, int y, float scale)
                       (int) (new_y + ring_radius));
           }
 
-          if (r->obj.flags & OF_GUILDMATE)
+          if (((r->obj.flags & OF_GUILDMATE) && !(r->obj.flags & PF_DM)))
           {
-              ring_radius = 2.0f * radius;
               SelectObject(hdc, hGuildmatePen);
               Ellipse(hdc, (int) (new_x - ring_radius),
                       (int) (new_y - ring_radius), 
                       (int) (new_x + ring_radius),
                       (int) (new_y + ring_radius));
-          }          
+          }
       }
       
       // Draw players in a different color
