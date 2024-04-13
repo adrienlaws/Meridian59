@@ -45,6 +45,8 @@ resources:
    Rev_coming_to_get_ya = "Your spine tingles as you sense the foreboding presence of a pursuing revenant drawing near."
    Rev_draining_effect = "The revenant makes a mystical motion... you feel drained."
 
+   revenant_spawn_wav = ghost_respawn.wav
+
 classvars:
    vrName = revenant_name_rsc
    vrIcon = revenant_icon_rsc
@@ -174,6 +176,8 @@ messages:
       poTarget = poHauntee;
       send(self,@EnterStateChase);
       Post(poHauntee,@MsgSendUser,#message_rsc=Rev_coming_to_get_ya);
+      Send(poRoom, @SomethingWaveRoom, #what=self, 
+            #wave_rsc=revenant_spawn_wav);
       
       return;
    }
