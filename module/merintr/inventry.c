@@ -585,10 +585,21 @@ void InventoryDrawSingleItem(InvItem *item, int row, int col)
 				  inventory_area.x + area.x, inventory_area.y + area.y, 
 				  INVENTORY_BOX_WIDTH, INVENTORY_BOX_HEIGHT);
 
-   if (item->is_using)
+   if (item->is_using) 
+   {
       OffscreenBitBlt(hdc, INVENTORY_OBJECT_BORDER, INVENTORY_OBJECT_BORDER, 
-		      INVENTORY_OBJECT_WIDTH, INVENTORY_OBJECT_HEIGHT, 
-		      inuse_bits, 0, 0, INVENTORY_OBJECT_WIDTH, OBB_FLIP | OBB_TRANSPARENT);
+                     INVENTORY_OBJECT_WIDTH, INVENTORY_OBJECT_HEIGHT, 
+                     inuse_bits, 0, 0, INVENTORY_OBJECT_WIDTH, OBB_FLIP | OBB_TRANSPARENT);
+
+      // Calculate the position of the health bar within the item's bounding box
+      int healthBarX = INVENTORY_OBJECT_BORDER;
+      int healthBarY = INVENTORY_OBJECT_BORDER + INVENTORY_OBJECT_HEIGHT - HEALTH_BAR_HEIGHT;
+      int healthBarWidth = INVENTORY_OBJECT_WIDTH;
+      int healthBarHeight = HEALTH_BAR_HEIGHT;
+
+      // Draw the health bar within the item's bounding box
+      DrawHealthBar(hdc, healthBarX, healthBarY, healthBarWidth, healthBarHeight, healthPercentage);
+   }
 
    DrawObject(hdc, item->obj, item->obj->animate->group, True, &obj_area, NULL, 
 	      INVENTORY_OBJECT_BORDER, INVENTORY_OBJECT_BORDER, 0, False);
@@ -1304,4 +1315,42 @@ HWND GetHwndInv()
 RawBitmap* pinventory_bkgnd()
 {
 	return &inventory_bkgnd;
+}
+
+void DrawHealthBar(HDC hdc, int x, int y, int width, int height, float healthPercentage)
+{
+    // Calculate the width of the health bar based on the health percentage
+    int healthBarWidth = static_cast<int>(width * healthPercentage);
+
+    // Draw the background of the health bar
+    HBRUSH hBackgroundBrush = CreateSolidBrush(RGB(200, 200, 200)); // Gray color
+    RECT rcBackground = { x, y, x + width, y + height };
+    FillRect(hdc, &rcBackground, hBackgroundBrush);
+    DeleteObject(hBackgroundBrush);
+
+    // Draw the health indicator on top of the background
+    HBRUSH hHealthBrush = CreateSolidBrush(RGB(0, 255, 0)); // Green color
+    RECT rcHealth = { x, y, x + healthBarWidth, y + height };
+    FillRect(hdc, &rcHealth, hHealthBrush);
+    DeleteObject(hHealthBrush);
+}
+
+// Example usage
+void DrawEquippedItemWithHealthBar(HDC hdc, HBITMAP itemBitmap, float healthPercentage)
+{
+   // Draw the equipped item bitmap
+   // Place these declarations at the beginning of the function where you use these variables
+   int itemX = INVENTORY_OBJECT_BORDER; // Example initialization for item X position
+   int itemY = INVENTORY_OBJECT_BORDER; // Example initialization for item Y position
+   int itemWidth = INVENTORY_OBJECT_WIDTH; // Example initialization for item width
+   int itemHeight = INVENTORY_OBJECT_HEIGHT; // Example initialization for item height
+
+    // Determine the position and size of the health bar relative to the equipped item
+    int healthBarX = itemX; // Adjust as needed
+    int healthBarY = itemY + itemHeight + 5; // Below the item with some padding
+    int healthBarWidth = itemWidth; // Same width as the item
+    int healthBarHeight = 10; // Fixed height for the health bar
+
+    // Draw the health bar
+    DrawHealthBar(hdc, healthBarX, healthBarY, healthBarWidth, healthBarHeight, healthPercentage);
 }

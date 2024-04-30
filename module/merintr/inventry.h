@@ -17,6 +17,12 @@
 #define INVENTORY_OBJECT_BORDER 2
 #define INVENTORY_BOX_WIDTH  (INVENTORY_OBJECT_WIDTH  + 2 * INVENTORY_OBJECT_BORDER)
 #define INVENTORY_BOX_HEIGHT (INVENTORY_OBJECT_HEIGHT + 2 * INVENTORY_OBJECT_BORDER)
+#define HEALTH_BAR_COLOR_BACKGROUND RGB(50, 50, 50) // Define constants for health bar colors
+#define HEALTH_BAR_COLOR_FOREGROUND RGB(0, 255, 0)
+#define HEALTH_BAR_COLOR_BORDER RGB(0, 0, 0)
+
+
+void DrawHealthBar(HDC hdc, int x, int y, int width, int height, float percentage);
 
 void InventoryBoxCreate(HWND hParent);
 void InventoryBoxDestroy(void);
