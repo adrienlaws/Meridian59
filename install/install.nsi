@@ -137,6 +137,7 @@ Section "Meridian 59 (required)"
   File "${SOURCEDIR}\mss32midi.dll"
   File "${SOURCEDIR}\mssmp3.asi"
   File "${SOURCEDIR}\waveplay.dll"
+  File "${SOURCEDIR}\irrKlang.dll"
   File "${SOURCEDIR}\zlib1.dll"
 
   File "${SOURCEDIR}\BsSndRpt.exe"
