@@ -410,9 +410,9 @@ void UserUnuse(void)
  */
 void UserToggleMusic(Bool music_on)
 {
-   if (music_on)
-      MusicStart();
-   else MusicAbort();
+   if (!music_on)
+      MusicStop();
+   else MusicRestart();
 }
 /************************************************************************/
 /*

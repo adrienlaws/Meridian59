@@ -47,7 +47,6 @@ void GameInit(void)
 
    KeyInit();
    DrawInitialize();
-   SoundInitialize();
    MapFileInitialize();
 
    GameSetState(GAME_INVALID);
@@ -74,8 +73,8 @@ void GameExit(void)
    // Can't close modules here, because WM_DESTROY messages sent to dialogs causes crash.
    // Modules are freed elsewhere.
 
-   MusicAbort();
-   SoundAbort();
+   SoundStopAll();
+   MusicStop();
    
    KeyClose();
    InterfaceClose();

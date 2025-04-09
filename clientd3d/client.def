@@ -201,13 +201,19 @@ EXPORTS
 	AnimateObject
 
 ; Sound and music
-	PlayMusicFile
-	PlayMusicRsc
-	PlayMidiRsc
-	PlayWaveFile
-	PlayWaveRsc
-	SoundAbort
-	MusicAbort
+	MusicStop
+	MusicRestart
+	MusicPlayFile
+	MusicPlayResource
+	MusicSetVolume
+	SoundStop
+	SoundStopAll
+	SoundPlayFile
+	SoundStopFile
+	SoundPlayResource
+	SoundStopResource
+	SoundSetVolume
+	SoundSetListenerPosition
 
 ; Non-game mode functions
 	OfflineConnect

@@ -242,16 +242,24 @@ INT_PTR CALLBACK PreferencesDialogProc(HWND hDlg, UINT message, WPARAM wParam, L
          config.play_loop_sounds = IsDlgButtonChecked(hDlg, IDC_LOOPSOUNDS);
          config.play_random_sounds = IsDlgButtonChecked(hDlg, IDC_RANDSOUNDS);
          if (!config.play_sound)
-            SoundAbort();
+            SoundStopAll();
 
          new_val = Trackbar_GetPos(GetDlgItem(hDlg, IDC_MUSIC_VOLUME));
          if (new_val != config.music_volume)
          {
             config.music_volume = new_val;
-            ResetMusicVolume();
+            MusicSetVolume();
          }
 
-         config.sound_volume = Trackbar_GetPos(GetDlgItem(hDlg, IDC_SOUND_VOLUME));
+         // Sound effects volume.
+         new_val = Trackbar_GetPos(GetDlgItem(hDlg, IDC_SOUND_VOLUME));
+         if (new_val != config.sound_volume)
+         {
+            config.sound_volume = new_val;
+            SoundSetVolume();
+         }
+
+         //config.sound_volume = Trackbar_GetPos(GetDlgItem(hDlg, IDC_SOUND_VOLUME));
          config.ambient_volume = Trackbar_GetPos(GetDlgItem(hDlg, IDC_AMBIENT_VOLUME));
 
          if( IsDlgButtonChecked( hDlg, IDC_TARGETHALO1 ) == BST_CHECKED )
