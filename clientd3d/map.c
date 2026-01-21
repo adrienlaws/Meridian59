@@ -45,7 +45,15 @@
 
 #define MAP_OBJECT_DISTANCE (7 * FINENESS) // Draw all object closer than this to player
 
+// Maximum number of sectors we can cache brushes for
+#define MAP_MAX_SECTOR_BRUSHES 256
+
 static HBRUSH hObjectBrush, hPlayerBrush, hNullBrush;
+
+// Cached sector pattern brushes for the current room (created from floor textures)
+static HBRUSH sectorBrushes[MAP_MAX_SECTOR_BRUSHES];
+static int numCachedSectorBrushes = 0;
+static bool sectorBrushesValid = false;
 static HPEN hWallPen, hSelfPen, hPlayerPen, hObjectPen;
 static HPEN hFriendPen, hEnemyPen, hGuildmatePen;
 
@@ -86,6 +94,10 @@ static void MapDrawPlayer(HDC hdc, int x, int y, float scale);
 static void MapDrawObjects(HDC hdc, list_type objects, int x, int y, float scale);
 static void MapDrawWalls(HDC hdc, int x, int y, float scale, room_type *room);
 static void MapDrawAnnotations( HDC hdc, MapAnnotation *annotations, int x, int y, float scaleToUse, bool bMiniMap );
+static void MapDrawSectors(HDC hdc, int x, int y, float scale, room_type *room);
+static void MapBuildSectorBrushes(room_type *room);
+static void MapFreeSectorBrushes(void);
+static HBRUSH MapCreateTextureBrush(PDIB pDib);
 
 void MapSetWallPositions(room_type *room, float scale, int numWalls)
 {
@@ -174,6 +186,8 @@ void MapClose(void)
    DeleteObject(hPlayerBrush);
    DeleteObject(hNullBrush);
 
+   MapFreeSectorBrushes();  // Free cached sector texture brushes
+
    if (pMapWalls)
       SafeFree(pMapWalls);
    pMapWalls = NULL;
@@ -221,6 +235,7 @@ void MapDraw( HDC hdc, BYTE *bits, AREA *area, room_type *room, int width, bool 
 	    xoffset = area->x + area->cx / 2 - (int) (player.x * scale);
 	    yoffset = area->y + area->cy / 2 - (int) (player.y * scale);
 
+	    MapDrawSectors(hdc, xoffset, yoffset, scale, room);
 	    MapDrawWalls(hdc, xoffset, yoffset, scale, room);
        if (config.map_annotations)
           MapDrawAnnotations(hdc, room->annotations, xoffset, yoffset, scale, FALSE );
@@ -254,6 +269,7 @@ void MapDraw( HDC hdc, BYTE *bits, AREA *area, room_type *room, int width, bool 
 	       mapCacheScale = scaleMiniMap;
 	       fMapCacheValid = TRUE;
 	    }
+	    MapDrawSectors(hdc, xoffsetMiniMap, yoffsetMiniMap, scaleMiniMap, room);
 	    if (pMapWalls) 
 	       MapDrawMiniMapWalls(hdc, xoffsetMiniMap, yoffsetMiniMap, room);
 	    else
@@ -567,6 +583,7 @@ void MapEnterRoom(room_type *room)
    }
 
    fMapCacheValid = FALSE;
+   MapFreeSectorBrushes();  // Rebuild sector brushes for new room
 }
 /*****************************************************************************/
 /*
@@ -933,4 +950,218 @@ void PrintMap(BOOL useDefault)
       EndDoc(pageSetup.hDC);
       RequestGamePing();
    }
+}
+
+/*****************************************************************************/
+/*
+ * MapCreateTextureBrush:  Creates a pattern brush from a floor texture.
+ *   Converts the paletted texture to a 24-bit DIB and creates a brush from it.
+ */
+static HBRUSH MapCreateTextureBrush(PDIB pDib)
+{
+   if (pDib == NULL)
+      return CreateSolidBrush(RGB(64, 64, 64));
+   
+   BYTE *srcBits = DibPtr(pDib);
+   int w = DibWidth(pDib);
+   int h = DibHeight(pDib);
+   PALETTEENTRY *pal = getPalette();
+   
+   if (srcBits == NULL || pal == NULL || w == 0 || h == 0)
+      return CreateSolidBrush(RGB(64, 64, 64));
+   
+   // Create a 24-bit DIB for the pattern brush
+   BITMAPINFO bmi;
+   ZeroMemory(&bmi, sizeof(bmi));
+   bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+   bmi.bmiHeader.biWidth = w;
+   bmi.bmiHeader.biHeight = -h;  // Top-down DIB
+   bmi.bmiHeader.biPlanes = 1;
+   bmi.bmiHeader.biBitCount = 24;
+   bmi.bmiHeader.biCompression = BI_RGB;
+   
+   // Allocate pixel buffer (24-bit, 4-byte aligned rows)
+   int rowBytes = ((w * 3) + 3) & ~3;
+   BYTE *pixels = (BYTE *)SafeMalloc(rowBytes * h);
+   if (pixels == NULL)
+      return CreateSolidBrush(RGB(64, 64, 64));
+   
+   // Convert paletted texture to 24-bit RGB
+   for (int y = 0; y < h; y++)
+   {
+      BYTE *dstRow = pixels + (y * rowBytes);
+      BYTE *srcRow = srcBits + (y * w);
+      for (int x = 0; x < w; x++)
+      {
+         BYTE idx = srcRow[x];
+         dstRow[x * 3 + 0] = pal[idx].peBlue;
+         dstRow[x * 3 + 1] = pal[idx].peGreen;
+         dstRow[x * 3 + 2] = pal[idx].peRed;
+      }
+   }
+   
+   // Create the DIB bitmap
+   HDC hdc = GetDC(NULL);
+   HBITMAP hBitmap = CreateDIBitmap(hdc, &bmi.bmiHeader, CBM_INIT, pixels, &bmi, DIB_RGB_COLORS);
+   ReleaseDC(NULL, hdc);
+   SafeFree(pixels);
+   
+   if (hBitmap == NULL)
+      return CreateSolidBrush(RGB(64, 64, 64));
+   
+   // Create pattern brush from the bitmap
+   HBRUSH hBrush = CreatePatternBrush(hBitmap);
+   DeleteObject(hBitmap);  // Brush keeps a copy, safe to delete
+   
+   if (hBrush == NULL)
+      return CreateSolidBrush(RGB(64, 64, 64));
+   
+   return hBrush;
+}
+
+/*****************************************************************************/
+/*
+ * MapFreeSectorBrushes:  Free all cached sector brushes.
+ */
+static void MapFreeSectorBrushes(void)
+{
+   for (int i = 0; i < numCachedSectorBrushes; i++)
+   {
+      if (sectorBrushes[i] != NULL)
+      {
+         DeleteObject(sectorBrushes[i]);
+         sectorBrushes[i] = NULL;
+      }
+   }
+   numCachedSectorBrushes = 0;
+   sectorBrushesValid = false;
+}
+
+/*****************************************************************************/
+/*
+ * MapBuildSectorBrushes:  Build pattern brushes for each sector in the room
+ *   based on their floor textures.
+ */
+static void MapBuildSectorBrushes(room_type *room)
+{
+   // Free any existing brushes first
+   MapFreeSectorBrushes();
+   
+   if (room == NULL || room->sectors == NULL)
+      return;
+   
+   int numSectors = room->num_sectors;
+   if (numSectors > MAP_MAX_SECTOR_BRUSHES)
+      numSectors = MAP_MAX_SECTOR_BRUSHES;
+   
+   for (int i = 0; i < numSectors; i++)
+   {
+      Sector *sector = &room->sectors[i];
+      sectorBrushes[i] = MapCreateTextureBrush(sector->floor);
+   }
+   
+   numCachedSectorBrushes = numSectors;
+   sectorBrushesValid = true;
+}
+
+/*****************************************************************************/
+/*
+ * MapDrawSectorLeaf:  Helper to draw a single BSP leaf polygon with the 
+ *   sector's floor texture as a pattern brush.
+ */
+static void MapDrawSectorLeaf(HDC hdc, int x, int y, float scale, BSPleaf *leaf, room_type *room)
+{
+   if (leaf == NULL || leaf->sector == NULL)
+      return;
+   
+   Poly *poly = &leaf->poly;
+   if (poly->npts < 3)
+      return;
+   
+   // Find sector index to get cached brush
+   int sectorIdx = (int)(leaf->sector - room->sectors);
+   if (sectorIdx < 0 || sectorIdx >= numCachedSectorBrushes)
+      return;
+   
+   HBRUSH hBrush = sectorBrushes[sectorIdx];
+   if (hBrush == NULL)
+      return;
+   
+   // Build scaled polygon points
+   POINT points[MAX_NPTS];
+   for (int i = 0; i < poly->npts; i++)
+   {
+      points[i].x = x + (int)(poly->p[i].x * scale);
+      points[i].y = y + (int)(poly->p[i].y * scale);
+   }
+   
+   // Set brush origin based on sector texture origin for proper alignment
+   // The texture origin is stored in sector->tx, sector->ty
+   int brushOrgX = x + (int)(leaf->sector->tx * scale);
+   int brushOrgY = y + (int)(leaf->sector->ty * scale);
+   SetBrushOrgEx(hdc, brushOrgX, brushOrgY, NULL);
+   
+   // Draw filled polygon with the texture pattern brush
+   HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
+   HPEN hOldPen = (HPEN)SelectObject(hdc, GetStockObject(NULL_PEN));
+   
+   Polygon(hdc, points, poly->npts);
+   
+   SelectObject(hdc, hOldPen);
+   SelectObject(hdc, hOldBrush);
+}
+
+/*****************************************************************************/
+/*
+ * MapDrawSectorsRecursive:  Recursively traverse the BSP tree and draw each
+ *   leaf's sector polygon.
+ */
+static void MapDrawSectorsRecursive(HDC hdc, int x, int y, float scale, BSPnode *node, room_type *room)
+{
+   if (node == NULL)
+      return;
+   
+   switch (node->type)
+   {
+   case BSPleaftype:
+      MapDrawSectorLeaf(hdc, x, y, scale, &node->u.leaf, room);
+      break;
+      
+   case BSPinternaltype:
+      // Traverse both sides of the BSP tree
+      MapDrawSectorsRecursive(hdc, x, y, scale, node->u.internal.pos_side, room);
+      MapDrawSectorsRecursive(hdc, x, y, scale, node->u.internal.neg_side, room);
+      break;
+   }
+}
+
+/*****************************************************************************/
+/*
+ * MapDrawSectors:  Draw textured polygons for each sector in the room based on
+ *   their floor textures. This provides a detailed map view showing actual
+ *   floor patterns instead of a plain background.
+ */
+static void MapDrawSectors(HDC hdc, int x, int y, float scale, room_type *room)
+{
+   if (room == NULL || room->tree == NULL)
+      return;
+   
+   // Build sector brush cache if needed
+   if (!sectorBrushesValid)
+      MapBuildSectorBrushes(room);
+   
+   if (numCachedSectorBrushes == 0)
+      return;
+   
+   MapDrawSectorsRecursive(hdc, x, y, scale, room->tree, room);
+}
+
+/*****************************************************************************/
+/*
+ * MapInvalidateSectorColors:  Call when entering a new room to rebuild
+ *   the sector brush cache. Also frees existing brushes.
+ */
+void MapInvalidateSectorColors(void)
+{
+   MapFreeSectorBrushes();
 }

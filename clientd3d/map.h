@@ -27,5 +27,6 @@ void MapExitRoom(room_type *room);
 void DrawMap( room_type *room, Draw3DParams *params, bool bMiniMap );
 M59EXPORT void MapShowAllWalls(room_type *room, bool show);
 void PrintMap(BOOL useDefault);
+void MapInvalidateSectorColors(void);
 
 #endif /* #ifndef _MAP_H */
