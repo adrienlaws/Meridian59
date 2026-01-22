@@ -34,6 +34,7 @@
 #define MAP_FRIEND_COLOR        PALETTERGB(0, 255, 0)
 #define MAP_ENEMY_COLOR         PALETTERGB(255, 0, 0)
 #define MAP_GUILDMATE_COLOR     PALETTERGB(255, 255, 0)
+#define MAP_MANANODE_COLOR      PALETTERGB(0, 255, 255)
 
 #define MAP_OBJECT_SIZE (FINENESS / 2)  // Size of ellipse drawn for an object
 #define MAP_OBJECT_MAX_SIZE 8           // Maximum size of object ellipses
@@ -50,12 +51,13 @@
 
 static HBRUSH hObjectBrush, hPlayerBrush, hNullBrush;
 
-// Cached sector pattern brushes for the current room (created from floor textures)
+// Cached sector brushes for the current room (solid color from average floor texture)
 static HBRUSH sectorBrushes[MAP_MAX_SECTOR_BRUSHES];
 static int numCachedSectorBrushes = 0;
 static bool sectorBrushesValid = false;
 static HPEN hWallPen, hSelfPen, hPlayerPen, hObjectPen;
-static HPEN hFriendPen, hEnemyPen, hGuildmatePen;
+static HPEN hFriendPen, hEnemyPen, hGuildmatePen, hMananodePen;
+static HBRUSH hMananodeBrush;
 
 static float zoom;              // Factor to zoom in on map
 
@@ -97,7 +99,7 @@ static void MapDrawAnnotations( HDC hdc, MapAnnotation *annotations, int x, int 
 static void MapDrawSectors(HDC hdc, int x, int y, float scale, room_type *room);
 static void MapBuildSectorBrushes(room_type *room);
 static void MapFreeSectorBrushes(void);
-static HBRUSH MapCreateTextureBrush(PDIB pDib);
+static COLORREF MapGetAverageTextureColor(PDIB pDib);
 
 void MapSetWallPositions(room_type *room, float scale, int numWalls)
 {
@@ -149,9 +151,11 @@ void MapInitialize(void)
    hFriendPen = CreatePen(PS_SOLID, MAP_PLAYER_THICKNESS, MAP_FRIEND_COLOR);
    hEnemyPen = CreatePen(PS_SOLID, MAP_PLAYER_THICKNESS, MAP_ENEMY_COLOR);
    hGuildmatePen = CreatePen(PS_SOLID, MAP_PLAYER_THICKNESS, MAP_GUILDMATE_COLOR);
+   hMananodePen = CreatePen(PS_SOLID, MAP_OBJECT_THICKNESS, MAP_MANANODE_COLOR);
    
    hObjectBrush = CreateSolidBrush(MAP_OBJECT_COLOR);
    hPlayerBrush = CreateSolidBrush(MAP_PLAYER_COLOR);
+   hMananodeBrush = CreateSolidBrush(MAP_MANANODE_COLOR);
    hNullBrush = CreateBrushIndirect(&logBrush);
    
    zoom = (float) 1.0;
@@ -181,9 +185,11 @@ void MapClose(void)
    DeleteObject(hFriendPen);
    DeleteObject(hEnemyPen);
    DeleteObject(hGuildmatePen);
+   DeleteObject(hMananodePen);
 
    DeleteObject(hObjectBrush);
    DeleteObject(hPlayerBrush);
+   DeleteObject(hMananodeBrush);
    DeleteObject(hNullBrush);
 
    MapFreeSectorBrushes();  // Free cached sector texture brushes
@@ -406,18 +412,29 @@ void MapDrawObjects(HDC hdc, list_type objects, int x, int y, float scale)
    {
       room_contents_node *r = (room_contents_node *) (l->data);
       
-      // Skip player and inanimate or invisible objects
-      if (r->obj.id == player.id || !(r->obj.flags & OF_ATTACKABLE) 
-	  || (GetDrawingEffect(r->obj.flags) == OF_INVISIBLE))
+      // Skip player and invisible objects
+      if (r->obj.id == player.id || (GetDrawingEffect(r->obj.flags) == OF_INVISIBLE))
 	 continue;
 
-      // Only draw monsters that are visible, or within a certain range.
-      dx = (r->motion.x - player.x) >> 4;
-      dy = (r->motion.y - player.y) >> 4;
-      if (((dx * dx + dy * dy) > mapObjectDistanceShiftAndSquare) &&
-          (!r->visible && !config.showUnseenMonsters) &&
-          !(r->obj.flags & OF_PLAYER)) 
-          continue;
+      // Draw attackable objects (monsters, players) and mana nodes
+      // Mana nodes are activatable AND translucent (levers are activatable but not translucent)
+      bool isAttackable = (r->obj.flags & OF_ATTACKABLE) != 0;
+      bool isManaNode = ((r->obj.flags & OF_ACTIVATABLE) != 0) && 
+                        (GetDrawingEffect(r->obj.flags) == OF_TRANSLUCENT50);
+      
+      if (!isAttackable && !isManaNode)
+         continue;
+
+      // For attackable objects, only draw if visible or within range
+      if (isAttackable)
+      {
+         dx = (r->motion.x - player.x) >> 4;
+         dy = (r->motion.y - player.y) >> 4;
+         if (((dx * dx + dy * dy) > mapObjectDistanceShiftAndSquare) &&
+             (!r->visible && !config.showUnseenMonsters) &&
+             !(r->obj.flags & OF_PLAYER)) 
+             continue;
+      }
 
       new_x = x + (r->motion.x * scale);
       new_y = y + (r->motion.y * scale);
@@ -465,14 +482,21 @@ void MapDrawObjects(HDC hdc, list_type objects, int x, int y, float scale)
           }          
       }
       
-      // Draw players in a different color
+      // Choose color based on object type
       if (r->obj.flags & OF_PLAYER)
       {
           SelectObject(hdc, hPlayerPen);
           SelectObject(hdc, hPlayerBrush);
       }
+      else if (isManaNode)
+      {
+          // Mana nodes (cyan)
+          SelectObject(hdc, hMananodePen);
+          SelectObject(hdc, hMananodeBrush);
+      }
       else 
       {
+          // Monsters and other attackable objects (red)
           SelectObject(hdc, hObjectPen);
           SelectObject(hdc, hObjectBrush);
       }
@@ -954,13 +978,13 @@ void PrintMap(BOOL useDefault)
 
 /*****************************************************************************/
 /*
- * MapCreateTextureBrush:  Creates a pattern brush from a floor texture.
- *   Converts the paletted texture to a 24-bit DIB and creates a brush from it.
+ * MapGetAverageTextureColor:  Computes the average RGB color of a floor texture.
+ *   Returns a COLORREF suitable for CreateSolidBrush.
  */
-static HBRUSH MapCreateTextureBrush(PDIB pDib)
+static COLORREF MapGetAverageTextureColor(PDIB pDib)
 {
    if (pDib == NULL)
-      return CreateSolidBrush(RGB(64, 64, 64));
+      return RGB(64, 64, 64);
    
    BYTE *srcBits = DibPtr(pDib);
    int w = DibWidth(pDib);
@@ -968,55 +992,28 @@ static HBRUSH MapCreateTextureBrush(PDIB pDib)
    PALETTEENTRY *pal = getPalette();
    
    if (srcBits == NULL || pal == NULL || w == 0 || h == 0)
-      return CreateSolidBrush(RGB(64, 64, 64));
+      return RGB(64, 64, 64);
    
-   // Create a 24-bit DIB for the pattern brush
-   BITMAPINFO bmi;
-   ZeroMemory(&bmi, sizeof(bmi));
-   bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-   bmi.bmiHeader.biWidth = w;
-   bmi.bmiHeader.biHeight = -h;  // Top-down DIB
-   bmi.bmiHeader.biPlanes = 1;
-   bmi.bmiHeader.biBitCount = 24;
-   bmi.bmiHeader.biCompression = BI_RGB;
+   unsigned long totalR = 0, totalG = 0, totalB = 0;
+   int numPixels = w * h;
    
-   // Allocate pixel buffer (24-bit, 4-byte aligned rows)
-   int rowBytes = ((w * 3) + 3) & ~3;
-   BYTE *pixels = (BYTE *)SafeMalloc(rowBytes * h);
-   if (pixels == NULL)
-      return CreateSolidBrush(RGB(64, 64, 64));
-   
-   // Convert paletted texture to 24-bit RGB
    for (int y = 0; y < h; y++)
    {
-      BYTE *dstRow = pixels + (y * rowBytes);
       BYTE *srcRow = srcBits + (y * w);
       for (int x = 0; x < w; x++)
       {
          BYTE idx = srcRow[x];
-         dstRow[x * 3 + 0] = pal[idx].peBlue;
-         dstRow[x * 3 + 1] = pal[idx].peGreen;
-         dstRow[x * 3 + 2] = pal[idx].peRed;
+         totalR += pal[idx].peRed;
+         totalG += pal[idx].peGreen;
+         totalB += pal[idx].peBlue;
       }
    }
    
-   // Create the DIB bitmap
-   HDC hdc = GetDC(NULL);
-   HBITMAP hBitmap = CreateDIBitmap(hdc, &bmi.bmiHeader, CBM_INIT, pixels, &bmi, DIB_RGB_COLORS);
-   ReleaseDC(NULL, hdc);
-   SafeFree(pixels);
+   BYTE avgR = (BYTE)(totalR / numPixels);
+   BYTE avgG = (BYTE)(totalG / numPixels);
+   BYTE avgB = (BYTE)(totalB / numPixels);
    
-   if (hBitmap == NULL)
-      return CreateSolidBrush(RGB(64, 64, 64));
-   
-   // Create pattern brush from the bitmap
-   HBRUSH hBrush = CreatePatternBrush(hBitmap);
-   DeleteObject(hBitmap);  // Brush keeps a copy, safe to delete
-   
-   if (hBrush == NULL)
-      return CreateSolidBrush(RGB(64, 64, 64));
-   
-   return hBrush;
+   return RGB(avgR, avgG, avgB);
 }
 
 /*****************************************************************************/
@@ -1039,8 +1036,8 @@ static void MapFreeSectorBrushes(void)
 
 /*****************************************************************************/
 /*
- * MapBuildSectorBrushes:  Build pattern brushes for each sector in the room
- *   based on their floor textures.
+ * MapBuildSectorBrushes:  Build solid color brushes for each sector in the room
+ *   based on the average color of their floor textures.
  */
 static void MapBuildSectorBrushes(room_type *room)
 {
@@ -1057,7 +1054,7 @@ static void MapBuildSectorBrushes(room_type *room)
    for (int i = 0; i < numSectors; i++)
    {
       Sector *sector = &room->sectors[i];
-      sectorBrushes[i] = MapCreateTextureBrush(sector->floor);
+      sectorBrushes[i] = CreateSolidBrush(MapGetAverageTextureColor(sector->floor));
    }
    
    numCachedSectorBrushes = numSectors;
@@ -1067,7 +1064,7 @@ static void MapBuildSectorBrushes(room_type *room)
 /*****************************************************************************/
 /*
  * MapDrawSectorLeaf:  Helper to draw a single BSP leaf polygon with the 
- *   sector's floor texture as a pattern brush.
+ *   sector's average floor color.
  */
 static void MapDrawSectorLeaf(HDC hdc, int x, int y, float scale, BSPleaf *leaf, room_type *room)
 {
@@ -1095,13 +1092,7 @@ static void MapDrawSectorLeaf(HDC hdc, int x, int y, float scale, BSPleaf *leaf,
       points[i].y = y + (int)(poly->p[i].y * scale);
    }
    
-   // Set brush origin based on sector texture origin for proper alignment
-   // The texture origin is stored in sector->tx, sector->ty
-   int brushOrgX = x + (int)(leaf->sector->tx * scale);
-   int brushOrgY = y + (int)(leaf->sector->ty * scale);
-   SetBrushOrgEx(hdc, brushOrgX, brushOrgY, NULL);
-   
-   // Draw filled polygon with the texture pattern brush
+   // Draw filled polygon with the sector's average floor color
    HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
    HPEN hOldPen = (HPEN)SelectObject(hdc, GetStockObject(NULL_PEN));
    
@@ -1137,9 +1128,8 @@ static void MapDrawSectorsRecursive(HDC hdc, int x, int y, float scale, BSPnode 
 
 /*****************************************************************************/
 /*
- * MapDrawSectors:  Draw textured polygons for each sector in the room based on
- *   their floor textures. This provides a detailed map view showing actual
- *   floor patterns instead of a plain background.
+ * MapDrawSectors:  Draw solid color polygons for each sector in the room based
+ *   on the average color of their floor textures.
  */
 static void MapDrawSectors(HDC hdc, int x, int y, float scale, room_type *room)
 {
