@@ -13,6 +13,19 @@
 #include <assert.h>
 
 #include "client.h"
+#include <dwmapi.h>
+
+// DWM window attributes used for the dark title bar and border.
+// Available since Windows 10 1809+; older systems silently ignore them.
+#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
+#define DWMWA_USE_IMMERSIVE_DARK_MODE 20
+#endif
+#ifndef DWMWA_BORDER_COLOR
+#define DWMWA_BORDER_COLOR 34
+#endif
+#ifndef DWMWA_COLOR_DEFAULT
+#define DWMWA_COLOR_DEFAULT 0xFFFFFFFF
+#endif
 
 #ifdef M59_RETAIL
   // Minidump reporting
@@ -166,9 +179,13 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		HANDLE_MSG(hwnd, WM_INITMENUPOPUP, InitMenuPopupHandler);
 
 	case WM_MEASUREITEM:
+		if (ThemedMenuBar_MeasureItem((MEASUREITEMSTRUCT *)lParam))
+			return TRUE;
 		ItemListMeasureItem(hwnd, (MEASUREITEMSTRUCT *) lParam);
 		return 0;
 	case WM_DRAWITEM:     // windowsx.h macro always returns FALSE
+		if (ThemedMenuBar_DrawItem((DRAWITEMSTRUCT *)lParam))
+			return TRUE;
 		return MainDrawItem(hwnd, (const DRAWITEMSTRUCT *)(lParam));
 
 	case WM_SETCURSOR:
@@ -196,6 +213,63 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case BK_MODULEUNLOAD:
 		ModuleUnloadById(lParam);
 		break;
+
+	case WM_NCPAINT:
+	{
+		// Let Windows paint the non-client area first.
+		LRESULT res = DefWindowProc(hwnd, message, wParam, lParam);
+
+		// In dark themes, Windows draws bright 1px separator lines at the
+		// top and bottom of the menu bar.  Paint over them with the dark
+		// background color so the menu bar blends with the rest of the
+		// chrome.
+		if (ThemeIsDark() && GetMenu(hwnd))
+		{
+			MENUBARINFO mbi;
+			memset(&mbi, 0, sizeof(mbi));
+			mbi.cbSize = sizeof(mbi);
+			if (GetMenuBarInfo(hwnd, OBJID_MENU, 0, &mbi))
+			{
+				RECT rcWindow;
+				GetWindowRect(hwnd, &rcWindow);
+
+				POINT ptClient = { 0, 0 };
+				ClientToScreen(hwnd, &ptClient);
+
+				HDC hdc = GetWindowDC(hwnd);
+				HBRUSH br = GetBrush(COLOR_BGD);
+
+				// Top separator: 1px line above the menu bar.
+				RECT rcTop;
+				rcTop.left   = mbi.rcBar.left   - rcWindow.left;
+				rcTop.right  = mbi.rcBar.right  - rcWindow.left;
+				rcTop.top    = mbi.rcBar.top    - rcWindow.top - 1;
+				rcTop.bottom = rcTop.top + 1;
+				FillRect(hdc, &rcTop, br);
+
+				// Bottom separator: 1px line below the menu bar (just above the client area).
+				RECT rcBottom;
+				rcBottom.left   = rcTop.left;
+				rcBottom.right  = rcTop.right;
+				rcBottom.bottom = ptClient.y - rcWindow.top;
+				rcBottom.top    = rcBottom.bottom - 1;
+				FillRect(hdc, &rcBottom, br);
+
+				ReleaseDC(hwnd, hdc);
+			}
+		}
+		return res;
+	}
+
+	case WM_NCACTIVATE:
+	{
+		// DefWindowProc paints the title bar; re-fire NCPAINT so our
+		// separator overpaint stays in place when focus changes.
+		LRESULT res = DefWindowProc(hwnd, message, wParam, lParam);
+		if (ThemeIsDark())
+			SendMessage(hwnd, WM_NCPAINT, (WPARAM)1, 0);
+		return res;
+	}
 	}
 
 	return DefWindowProc (hwnd, message, wParam, lParam);
@@ -275,14 +349,46 @@ void ClearMessageQueue(void)
 }
 /************************************************************************/
 /*
- * ThemeApply:  Reload the color palette for the active theme and force
- *   a repaint of the main window.  Called when the user changes themes
- *   in the Preferences dialog.
+ * ThemeApplyChrome:  Apply the current theme to the main window's
+ *   non-client chrome: DWM title bar mode, window border color, and
+ *   themed menu bar.  Safe to call on a freshly created window or after
+ *   a theme switch.
+ */
+static void ThemeApplyChrome(void)
+{
+	bool dark = ThemeIsDark();
+
+	BOOL useDarkMode = dark ? TRUE : FALSE;
+	DwmSetWindowAttribute(hMain, DWMWA_USE_IMMERSIVE_DARK_MODE,
+		&useDarkMode, sizeof(useDarkMode));
+
+	COLORREF borderColor = dark ? GetColor(COLOR_BGD) : DWMWA_COLOR_DEFAULT;
+	DwmSetWindowAttribute(hMain, DWMWA_BORDER_COLOR,
+		&borderColor, sizeof(borderColor));
+
+	ThemedMenuBar_Apply(GetMenu(hMain));
+}
+/************************************************************************/
+/*
+ * ThemeApply:  Reload the color palette for the active theme, refresh
+ *   the window background bitmap and chrome, and force a repaint.
+ *   Called when the user changes themes in the Preferences dialog.
  */
 void ThemeApply(void)
 {
+	// Remove owner-drawn menu state before destroying color brushes.
+	ThemedMenuBar_Destroy();
+
 	ColorsDestroy();
 	ColorsCreate(false);
+
+	// Reload background bitmap for the active theme.
+	CreateWindowBackground();
+
+	// Refresh window chrome (title bar, border, menu bar) for the new theme.
+	ThemeApplyChrome();
+	DrawMenuBar(hMain);
+
 	MainChangeColor();
 	ModuleEvent(EVENT_COLORCHANGED, -1, 0);
 	if (hMain != NULL)
@@ -338,6 +444,8 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 		MainQuit(hMain);
 		exit(1);
 	}
+
+	ThemeApplyChrome();
 
 	if (config.debug)
 		CreateDebugWindow();

@@ -69,7 +69,7 @@ static char colorinfo_default[][COLOR_STR_LEN] = {
 
 // Dark theme.
 static char colorinfo_dark[][COLOR_STR_LEN] = {
-	{ "0,0,0"},         /* COLOR_BGD */
+	{ "50,50,53"},      /* COLOR_BGD */
 	{ "212,212,212"},   /* COLOR_FGD */
 	{ "255,255,255"},   /* COLOR_LISTSELBGD - matches default for dialog list highlights */
 	{ "0,0,0"},         /* COLOR_LISTSELFGD - matches default for dialog list highlights */
@@ -106,7 +106,7 @@ static char color_section_dark[]    = "ColorsDark";
 static char INIColorVersion[]       = "ColorVersion";
 
 // Bump when default values for any color change.
-static const int THEME_COLOR_VERSION = 5;
+static const int THEME_COLOR_VERSION = 6;
 
 // Returns the INI section name for the active theme.
 static char *ColorSectionForTheme(Theme theme)
@@ -295,6 +295,23 @@ void ColorsSave(void)
 bool ThemeIsDark(void)
 {
 	return config.theme == Theme::Dark;
+}
+/************************************************************************/
+/*
+ * ThemeResourceId:  Returns the variant of a bitmap resource ID for the
+ *   active theme.  Returns the input ID unchanged when the default theme
+ *   is active or when no variant exists.  Lets callers stay theme-blind.
+ */
+int ThemeResourceId(int id)
+{
+	if (!ThemeIsDark())
+		return id;
+
+	switch (id)
+	{
+	case IDB_BACKGROUND: return IDB_BACKGROUND_DARK;
+	default:             return id;
+	}
 }
 /************************************************************************/
 void ColorsRestoreDefaults(void)
