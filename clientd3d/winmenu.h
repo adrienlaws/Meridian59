@@ -20,4 +20,10 @@ void MenuConnect(void);
 void MenuDisconnect(void);
 void MenuCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify);
 
+M59EXPORT void ThemedMenuBar_Apply(HMENU hMenu);
+void ThemedMenuBar_Remove(HMENU hMenu);
+void ThemedMenuBar_Destroy(void);
+bool ThemedMenuBar_MeasureItem(MEASUREITEMSTRUCT *mis);
+bool ThemedMenuBar_DrawItem(DRAWITEMSTRUCT *dis);
+
 #endif /* #ifndef _WINMENU_H */
