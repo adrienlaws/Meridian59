@@ -191,10 +191,10 @@ void InventoryBoxCreate(HWND hParent)
       selftrgt_bits = NULL;
    else selftrgt_bits = ((BYTE *) ptr) + sizeof(BITMAPINFOHEADER) + NUM_COLORS * sizeof(RGBQUAD);
 
-   if (!GetBitmapResourceInfo(hInst, IDB_INVBKGND, &inventory_bkgnd))
+   if (!GetBitmapResourceInfo(hInst, ThemeResourceId(IDB_INVBKGND), &inventory_bkgnd))
      debug(("InventoryBoxCreate couldn't load inventory background bitmap\n"));
 
-	if( !( ptr = GetBitmapResource( hInst, IDB_INVBKGND ) ) )
+	if( !( ptr = GetBitmapResource( hInst, ThemeResourceId(IDB_INVBKGND) ) ) )
 		debug(("InventoryBoxCreate couldn't load inventory scroll bar texture bitmap\n"));
 
 	logbrush.lbStyle = BS_DIBPATTERNPT;

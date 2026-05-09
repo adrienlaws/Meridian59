@@ -130,6 +130,7 @@ void InterfaceResizeModule(int xsize, int ysize, AREA *view)
 void InterfaceRedrawModule(HDC hdc)
 {
   UserAreaRedraw();
+  InterfaceDrawSidebarBackground(hdc);
   InterfaceDrawElements(hdc);
   StatsDrawBorder();
   StatsMainRedraw();
