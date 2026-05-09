@@ -291,7 +291,11 @@ bool EnchantmentDrawItem(HWND hwnd, const DRAWITEMSTRUCT *lpdis)
       p.x = r.left;
       p.y = r.top;
       ScreenToClient(cinfo->hMain, &p);
-      OffscreenWindowBackground(NULL, p.x, p.y, ENCHANT_SIZE, ENCHANT_SIZE);
+      // In the dark theme the portrait area is painted with the inventory
+      // texture, so paint enchantment icons over the same texture instead
+      // of the darker main window background.
+      RawBitmap *bg = ThemeIsDark() ? pinventory_bkgnd() : NULL;
+      OffscreenWindowBackground(bg, p.x, p.y, ENCHANT_SIZE, ENCHANT_SIZE);
 
       area.x = area.y = 0;
       area.cx = area.cy = ENCHANT_SIZE;

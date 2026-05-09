@@ -287,6 +287,16 @@ void ColorsSave(void)
 	WriteConfigInt(section, INIColorVersion, THEME_COLOR_VERSION, ini_file);
 }
 /************************************************************************/
+/*
+ * ThemeIsDark:  Returns true if the active theme is the dark theme.
+ *   Single source of truth for theme-aware code paths in the client and
+ *   in modules that link against the client's exports.
+ */
+bool ThemeIsDark(void)
+{
+	return config.theme == Theme::Dark;
+}
+/************************************************************************/
 void ColorsRestoreDefaults(void)
 {
 	ColorsDestroy();

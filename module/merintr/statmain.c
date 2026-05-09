@@ -170,7 +170,10 @@ void StatsMainRedraw(void)
 
       obj->icon_res = s->name_res;
 
-      OffscreenWindowBackground(NULL, a.x, a.y, a.cx, a.cy);
+      // In the dark theme the portrait area is painted with the inventory
+      // texture, so paint the stat icon background with the same texture.
+      RawBitmap *bg = ThemeIsDark() ? pinventory_bkgnd() : NULL;
+      OffscreenWindowBackground(bg, a.x, a.y, a.cx, a.cy);
       DrawStretchedObjectDefault(hdc, obj, &a, NULL); 
       GdiFlush();
 
