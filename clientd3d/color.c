@@ -80,9 +80,9 @@ static char colorinfo_dark[][COLOR_STR_LEN] = {
 	{ "60,60,64"},      /* COLOR_EDITBGD */
 	{ "200,160,255"},   /* COLOR_SYSMSGFGD */
 	{ "212,212,212"},   /* COLOR_MAINEDITFGD */
-	{ "50,50,53"},      /* COLOR_MAINEDITBGD */
+	{ "30,30,30"},      /* COLOR_MAINEDITBGD */
 	{ "255,255,255"},   /* COLOR_LISTFGD - matches default for dialog lists */
-	{ "0,0,0"},         /* COLOR_LISTBGD - matches default for dialog lists */
+	{ "30,30,30"},      /* COLOR_LISTBGD - dark content well, matches dialog fields */
 	{ "230,100,100"},   /* COLOR_RMMSGFGD */
 	{ "50,50,53"},      /* COLOR_RMMSGBGD */
 	{ "212,212,212"},   /* COLOR_STATSFGD */
@@ -106,7 +106,7 @@ static char color_section_dark[]    = "ColorsDark";
 static char INIColorVersion[]       = "ColorVersion";
 
 // Bump when default values for any color change.
-static const int THEME_COLOR_VERSION = 7;
+static const int THEME_COLOR_VERSION = 8;
 
 // Returns the INI section name for the active theme.
 static char *ColorSectionForTheme(Theme theme)
