@@ -190,12 +190,13 @@ long D3DRenderObjects(
 	long vx = objectsRenderParams.params->viewer_x;
 	long vy = objectsRenderParams.params->viewer_y;
 
-	// Compute camera forward direction in world space.
-	int angleHeading = objectsRenderParams.params->viewer_angle + 3 * NUMDEGREES / 4;
+	// Camera forward direction on the ground plane. The X term must be negative to
+	// match the view rotation.
+	int angleHeading = objectsRenderParams.params->viewer_angle + LEGACY_HEADING_OFFSET;
 	if (angleHeading >= NUMDEGREES)
 		angleHeading -= NUMDEGREES;
 	float theta = static_cast<float>(angleHeading) * GAME_ANGLE_TO_RAD;
-	float fwdX = sinf(theta);
+	float fwdX = -sinf(theta);
 	float fwdY = cosf(theta);
 
 	std::sort(drawdata, drawdata + gameObjectDataParams.numItems,
