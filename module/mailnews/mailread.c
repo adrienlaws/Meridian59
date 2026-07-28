@@ -100,9 +100,12 @@ INT_PTR CALLBACK ReadMailDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPAR
       CenterWindow(hDlg, cinfo->hMain);
       hReadMailDlg = hDlg;
 
+      ThemeApplyDialogTitleBar(hDlg);
+
       hEdit = GetDlgItem(hDlg, IDC_MAILEDIT);
       hList = GetDlgItem(hDlg, IDC_MAILLIST);
       SendMessage(hDlg, BK_SETDLGFONTS, 0, 0);
+      SendMessage(hDlg, BK_SETDLGCOLORS, 0, 0);
 
       ListView_SetExtendedListViewStyleEx(hList, LVS_EX_FULLROWSELECT,
                                           LVS_EX_FULLROWSELECT);
@@ -165,8 +168,11 @@ INT_PTR CALLBACK ReadMailDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPAR
       return TRUE;
 
    case BK_SETDLGCOLORS:
+      // A list view paints the area behind item text separately from its own
+      // background, and that one defaults to white.
       ListView_SetTextColor(hList, GetColor(COLOR_LISTFGD));
       ListView_SetBkColor(hList, GetColor(COLOR_LISTBGD));
+      ListView_SetTextBkColor(hList, GetColor(COLOR_LISTBGD));
       InvalidateRect(hDlg, NULL, TRUE);
       return TRUE;
 
