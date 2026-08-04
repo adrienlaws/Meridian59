@@ -12,6 +12,16 @@ Theme definitions and the abstraction that hides them live in `clientd3d/color.c
 
 The active theme is stored in `Config::theme` (the `Theme` enum in `clientd3d/config.h`).  Each theme keeps its customized colors in its own INI section (e.g. `[Colors]`, `[ColorsDark]`) so switching themes does not clobber the other theme's saved values.
 
+`THEME_COLOR_VERSION` in `clientd3d/color.c` must be incremented whenever a default color changes.  Saved colors are discarded when the stored version does not match, and the version is compared per INI section, so a bump resets every theme.  Users lose any color they customized, which is why palette changes are worth batching into one commit.
+
+### Choosing dark theme colors
+
+A dark palette is not a light palette inverted.  Three rules shape the dark theme's values:
+
+- Surfaces form a ladder, roughly 1.2:1 apart in contrast: a base for the main window, a lighter surface for panels and dialogs, and a well for lists and edit fields.  Steps much smaller than that make panel boundaries invisible; much larger and a well reads as a hole punched through the window.
+- Text is not pure white.  White on a near-black background reaches 21:1, the highest ratio two colors can have, and light glyphs bleed outward at that contrast.  Primary text sits near 10:1 instead.
+- Accent colors are desaturated.  Fully saturated primaries vibrate against dark backgrounds and fringe at small sizes.  The item rarity colors keep their hues but sit in the same 6:1 to 9:1 band as everything else.
+
 ## Bitmap surfaces
 
 Bitmap theming is per-surface.  A surface is themed when a `_DARK` (or other theme-specific) variant exists and the code path routes the ID through a resolver.  Surfaces without a variant render the default art under every theme.

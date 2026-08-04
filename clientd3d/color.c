@@ -67,37 +67,41 @@ static char colorinfo_default[][COLOR_STR_LEN] = {
 	{ "255,0,0"},	    /* COLOR_ITEM_TEXT_CURSED       - red    */
 };
 
-// Dark theme.
+// Dark theme.  Surfaces step base 24,24,26 -> surface 45,45,48 -> well 30,30,30,
+// each about 1.2:1 apart so panels read as distinct without a hard edge between
+// them.  Text is 222,222,222 rather than white, which lands near 10:1 instead of
+// the 21:1 that makes light glyphs bleed on a dark background.  Accent colors are
+// desaturated to the same 6:1 to 9:1 band.  See docs/themes.md.
 static char colorinfo_dark[][COLOR_STR_LEN] = {
-	{ "0,0,0"},         /* COLOR_BGD */
-	{ "212,212,212"},   /* COLOR_FGD */
-	{ "255,255,255"},   /* COLOR_LISTSELBGD - matches default for dialog list highlights */
-	{ "0,0,0"},         /* COLOR_LISTSELFGD - matches default for dialog list highlights */
-	{ "50,50,53"},      /* COLOR_MAILBGD */
-	{ "212,212,212"},   /* COLOR_MAILFGD */
-	{ "240,208,25"},    /* COLOR_HIGHLITE */
-	{ "212,212,212"},   /* COLOR_EDITFGD */
-	{ "60,60,64"},      /* COLOR_EDITBGD */
-	{ "200,160,255"},   /* COLOR_SYSMSGFGD */
-	{ "212,212,212"},   /* COLOR_MAINEDITFGD */
-	{ "30,30,30"},      /* COLOR_MAINEDITBGD */
-	{ "255,255,255"},   /* COLOR_LISTFGD - matches default for dialog lists */
-	{ "30,30,30"},      /* COLOR_LISTBGD - dark content well, matches dialog fields */
-	{ "230,100,100"},   /* COLOR_RMMSGFGD */
-	{ "50,50,53"},      /* COLOR_RMMSGBGD */
-	{ "212,212,212"},   /* COLOR_STATSFGD */
-	{ "50,50,53"},      /* COLOR_STATSBGD */
+	{ "24,24,26"},      /* COLOR_BGD - base */
+	{ "222,222,222"},   /* COLOR_FGD */
+	{ "52,88,140"},     /* COLOR_LISTSELBGD - selection */
+	{ "240,240,240"},   /* COLOR_LISTSELFGD - selection */
+	{ "30,30,30"},      /* COLOR_MAILBGD - well */
+	{ "222,222,222"},   /* COLOR_MAILFGD */
+	{ "232,198,92"},    /* COLOR_HIGHLITE */
+	{ "222,222,222"},   /* COLOR_EDITFGD */
+	{ "45,45,48"},      /* COLOR_EDITBGD - surface */
+	{ "194,168,240"},   /* COLOR_SYSMSGFGD */
+	{ "222,222,222"},   /* COLOR_MAINEDITFGD */
+	{ "30,30,30"},      /* COLOR_MAINEDITBGD - well */
+	{ "222,222,222"},   /* COLOR_LISTFGD */
+	{ "30,30,30"},      /* COLOR_LISTBGD - well */
+	{ "236,148,148"},   /* COLOR_RMMSGFGD */
+	{ "30,30,30"},      /* COLOR_RMMSGBGD - well */
+	{ "222,222,222"},   /* COLOR_STATSFGD */
+	{ "45,45,48"},      /* COLOR_STATSBGD - surface */
 	{ "0,128,0"},       /* COLOR_BAR1 - bar fill (health/mana/vigor) */
 	{ "128,0,0"},       /* COLOR_BAR2 - limit/damage bar */
 	{ "48,0,0"},        /* COLOR_BAR3 - bar background */
 	{ "255,255,255"},   /* COLOR_BAR4 - bar numbers */
 	{ "180,180,180"},   /* COLOR_INVNUMFGD */
-	{ "50,50,53"},      /* COLOR_INVNUMBGD */
-	{ "141,242,242"},   /* COLOR_ITEM_TEXT_UNCOMMON */
-	{ "0,255,0"},       /* COLOR_ITEM_TEXT_RARE */
-	{ "255,0,255"},     /* COLOR_ITEM_TEXT_LEGENDARY */
-	{ "252,128,0"},     /* COLOR_ITEM_TEXT_UNIDENTIFIED */
-	{ "255,0,0"},       /* COLOR_ITEM_TEXT_CURSED */
+	{ "0,0,0"},         /* COLOR_INVNUMBGD - drop shadow, not a background */
+	{ "126,196,204"},   /* COLOR_ITEM_TEXT_UNCOMMON */
+	{ "124,214,130"},   /* COLOR_ITEM_TEXT_RARE */
+	{ "206,150,240"},   /* COLOR_ITEM_TEXT_LEGENDARY */
+	{ "232,160,86"},    /* COLOR_ITEM_TEXT_UNIDENTIFIED */
+	{ "238,124,124"},   /* COLOR_ITEM_TEXT_CURSED */
 };
 
 // INI section names; one section per theme.
@@ -106,7 +110,7 @@ static char color_section_dark[]    = "ColorsDark";
 static char INIColorVersion[]       = "ColorVersion";
 
 // Bump when default values for any color change.
-static const int THEME_COLOR_VERSION = 8;
+static const int THEME_COLOR_VERSION = 9;
 
 // Returns the INI section name for the active theme.
 static char *ColorSectionForTheme(Theme theme)
