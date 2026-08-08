@@ -98,10 +98,10 @@ static char colorinfo_dark[][COLOR_STR_LEN] = {
 	{ "50,50,53"},      /* COLOR_RMMSGBGD */
 	{ "212,212,212"},   /* COLOR_STATSFGD */
 	{ "50,50,53"},      /* COLOR_STATSBGD */
-	{ "96,96,102"},     /* COLOR_BAR1 - bar fill - grey */
-	{ "72,72,76"},      /* COLOR_BAR2 - limit bar - dark grey */
-	{ "40,40,43"},      /* COLOR_BAR3 - bar background - very dark grey */
-	{ "255,255,255"},   /* COLOR_BAR4 - bar numbers */
+	{ "25,135,84"},     /* COLOR_BAR1 - bar fill - green */
+	{ "132,32,41"},     /* COLOR_BAR2 - limit bar - dark red */
+	{ "33,37,41"},      /* COLOR_BAR3 - bar background - very dark grey */
+	{ "222,226,230"},   /* COLOR_BAR4 - bar numbers - near white */
 	{ "180,180,180"},   /* COLOR_INVNUMFGD */
 	{ "50,50,53"},      /* COLOR_INVNUMBGD */
 	{ "141,242,242"},   /* COLOR_ITEM_TEXT_UNCOMMON */
@@ -109,12 +109,12 @@ static char colorinfo_dark[][COLOR_STR_LEN] = {
 	{ "255,0,255"},     /* COLOR_ITEM_TEXT_LEGENDARY */
 	{ "252,128,0"},     /* COLOR_ITEM_TEXT_UNIDENTIFIED */
 	{ "255,0,0"},       /* COLOR_ITEM_TEXT_CURSED */
-	{ "196,64,60"},     /* COLOR_HEALTHBAR    - red */
-	{ "110,38,36"},     /* COLOR_HEALTHLIMIT  - dim red */
-	{ "72,120,200"},    /* COLOR_MANABAR      - blue */
-	{ "40,66,110"},     /* COLOR_MANALIMIT    - dim blue */
-	{ "208,168,52"},    /* COLOR_VIGORBAR     - gold */
-	{ "116,92,30"},     /* COLOR_VIGORLIMIT   - dim gold */
+	{ "220,53,69"},     /* COLOR_HEALTHBAR    - red */
+	{ "88,21,28"},      /* COLOR_HEALTHLIMIT  - dim red */
+	{ "13,110,253"},    /* COLOR_MANABAR      - blue */
+	{ "5,44,101"},      /* COLOR_MANALIMIT    - dim blue */
+	{ "255,193,7"},     /* COLOR_VIGORBAR     - gold */
+	{ "102,77,3"},      /* COLOR_VIGORLIMIT   - dim gold */
 	{ "0,0,0"},         /* COLOR_STATBARFRAME - black */
 };
 
@@ -124,7 +124,7 @@ static char color_section_dark[]    = "ColorsDark";
 static char INIColorVersion[]       = "ColorVersion";
 
 // Bump when default values for any color change.
-static const int THEME_COLOR_VERSION = 9;
+static const int THEME_COLOR_VERSION = 12;
 
 // Returns the INI section name for the active theme.
 static char *ColorSectionForTheme(Theme theme)

@@ -57,7 +57,7 @@ flowchart LR
 
 The health, mana, and vigor bars above the map and the character stat bars in the stats tab draw through the graph control in `clientd3d/graphctl.c`, pulling their colors from the active theme's color table.
 
-A theme opts into custom stat bars through `ThemeUsesCustomStatBars` in `clientd3d/color.c`.  When it does, the bars draw as flat rounded bars with a gradient fill, per-stat colors (red health, blue mana, gold vigor), and no ornament frame.  Other themes keep the original rectangular bars.
+A theme opts into custom stat bars through `ThemeUsesCustomStatBars` in `clientd3d/color.c`.  When it does, the bars draw as flat rounded bars with a gradient fill, per-stat colors (red health, blue mana, gold vigor), and no ornament frame.  Custom bars also put the value at the right edge of the bar instead of following the filled portion.  Other themes keep the original rectangular bars.
 
 ## Per-module bitmap resolvers
 

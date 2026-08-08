@@ -33,9 +33,7 @@ const long BAR_POS_SCALE = 1000;
 const int BAR_CORNER_RADIUS    = 3;   // Corner radius in pixels
 const int BAR_GRADIENT_LIGHTEN = 70;  // Lighten the fill color at the top edge
 const int BAR_GRADIENT_DARKEN  = 30;  // Darken the fill color at the bottom edge
-const COLORREF BAR_NUMBER_OUTLINE = RGB(0, 0, 0);  // Outline behind the bar number for contrast
-const int BAR_NUMBER_PAD    = 3;  // Gap from the bar edge to the number
-const int BAR_NUMBER_GAP    = 6;  // Extra room needed past the bar to put the number outside
+const int BAR_NUMBER_COLUMN = 26; // Width reserved at the right of the bar for the value
 const int BAR_NUMBER_MARGIN = 4;  // Distance kept from the right edge
 
 /* Default colors, in order of GRAPHCOLOR_ constants */
@@ -267,7 +265,8 @@ void GraphCtlKey(HWND hwnd, UINT vk, BOOL fDown, int cRepeat, UINT flags)
 /*****************************************************************************/
 /*
  * GraphCtlFillSlice:  Fill the horizontal slice [x0, x1] of a bar in the
- *   given color.  Custom bars use a vertical gradient clipped to a rounded outline.
+ *   given color.  Custom bars use a vertical gradient clipped to the bar's
+ *   rounded outline, with the right end of the slice rounded to match.
  *   Default bars use a flat fill inset to sit inside the frame.
  */
 static void GraphCtlFillSlice(HDC hdc, const RECT *rect, long x0, long x1,
@@ -312,7 +311,16 @@ static void GraphCtlFillSlice(HDC hdc, const RECT *rect, long x0, long x1,
    // are exclusive, so extend right and bottom by 1 to reach the edges
    HRGN round = CreateRoundRectRgn(rect->left, rect->top, rect->right + 1, rect->bottom + 1,
                                    corner * 2, corner * 2);
-   HRGN clip = CreateRectRgn(x0, rect->top, x1, rect->bottom);
+
+   // Round the right end so a partly filled bar does not end in a hard vertical
+   // cut.  The left stays square because the bar's own outline rounds it.
+   HRGN clip = CreateRoundRectRgn(x0, rect->top, x1, rect->bottom,
+                                  corner * 2, corner * 2);
+   HRGN square_left = CreateRectRgn(x0, rect->top,
+                                    std::min(x1, x0 + corner), rect->bottom);
+   CombineRgn(clip, clip, square_left, RGN_OR);
+   DeleteObject(square_left);
+
    CombineRgn(clip, clip, round, RGN_AND);
    SelectClipRgn(hdc, clip);
 
@@ -324,16 +332,16 @@ static void GraphCtlFillSlice(HDC hdc, const RECT *rect, long x0, long x1,
 }
 /*****************************************************************************/
 /*
- * GraphCtlDrawNumber:  Draw the bar's value at value_pos.  Custom bars add a
- *   dark outline for contrast against the fill and keep a small edge margin.
- *   Default bars draw the value as is.
+ * GraphCtlDrawNumber:  Draw the bar's value.  Custom bars right-align it in the
+ *   space reserved at the right of the bar.  Default bars draw it at value_pos.
  */
 static void GraphCtlDrawNumber(HDC hdc, int value, long value_pos, const RECT *rect,
                                bool custom)
 {
    char temp[MAXAMOUNT + 1];
    SIZE size;
-   int x, y, pad = custom ? BAR_NUMBER_PAD : 1;  // Default bars keep the original 1px gap
+   int x, y;
+   const int pad = 1;  // Default bars keep the original 1px gap
 
    snprintf(temp, sizeof(temp), "%d", value);
    int len = (int) strlen(temp);
@@ -341,24 +349,17 @@ static void GraphCtlDrawNumber(HDC hdc, int value, long value_pos, const RECT *r
    SelectObject(hdc, GetFont(FONT_STATNUM));
    GetTextExtentPoint32(hdc, temp, len, &size);
 
-   // Put the number past the bar if it fits, otherwise inside the bar
-   if (rect->right - value_pos > size.cx + (custom ? BAR_NUMBER_GAP : 0))
+   // Custom bars keep the value at the right edge.  Default bars put the number
+   // past the bar if it fits, otherwise inside the bar
+   if (custom)
+      x = rect->right - size.cx - BAR_NUMBER_MARGIN;
+   else if (rect->right - value_pos > size.cx)
       x = value_pos + pad;
    else
       x = value_pos - size.cx - pad;
-   if (custom && x + size.cx > rect->right - BAR_NUMBER_MARGIN)
-      x = rect->right - size.cx - BAR_NUMBER_MARGIN;
 
    y = std::max(0L, (rect->bottom - size.cy) / 2);
 
-   if (custom)
-   {
-      SetTextColor(hdc, BAR_NUMBER_OUTLINE);
-      TextOut(hdc, x - 1, y, temp, len);
-      TextOut(hdc, x + 1, y, temp, len);
-      TextOut(hdc, x, y - 1, temp, len);
-      TextOut(hdc, x, y + 1, temp, len);
-   }
    SetTextColor(hdc, GetColor(COLOR_BAR4));
    TextOut(hdc, x, y, temp, len);
 }
@@ -368,7 +369,7 @@ static void GraphCtlDrawNumber(HDC hdc, int value, long value_pos, const RECT *r
  *   bar or the custom rounded bar when the control sets GCS_CUSTOM and the theme
  *   supplies custom stat bars.  Resolve each color slot to a pen and brush,
  *   compute the fill position from the current value, then paint in order: the
- *   empty track, the value slice, the limit slice up to the maximum, the frame,
+ *   background, the limit slice up to the maximum, the value slice, the frame,
  *   the value number, and the slider handle for slider graphs.
  */
 void GraphCtlPaint(HWND hwnd)
@@ -423,6 +424,10 @@ void GraphCtlPaint(HWND hwnd)
       rect.bottom -= GRAPH_SLIDER_HEIGHT;
    }
 
+   // Custom bars stop the fill short of the right edge and leave that space for
+   // the value
+   long fill_right = rect.right - (custom ? BAR_NUMBER_COLUMN : 0);
+
    // Bar fill position
    if (info->min_value == info->max_value)
       bar_pos = BAR_POS_SCALE;
@@ -433,11 +438,11 @@ void GraphCtlPaint(HWND hwnd)
       // Clamp in case the value sits outside the min/max range
       bar_pos = std::clamp(bar_pos, 0L, BAR_POS_SCALE);
    }
-   bar_pos = bar_pos * (rect.right - rect.left - 2 * inset) / BAR_POS_SCALE + rect.left + inset;
+   bar_pos = bar_pos * (fill_right - rect.left - 2 * inset) / BAR_POS_SCALE + rect.left + inset;
    value_pos = bar_pos;
    slider_pos = bar_pos;
 
-   // Fill the empty track.  The value and limit slices paint on top
+   // Fill the background.  The value and limit slices paint on top
    if (custom)
    {
       SelectObject(hdc, (HPEN) GetStockObject(NULL_PEN));
@@ -451,21 +456,22 @@ void GraphCtlPaint(HWND hwnd)
       FillRect(hdc, &inner, bkgnd_brush);
    }
 
-   GraphCtlFillSlice(hdc, &rect, rect.left + inset, bar_pos, colors[GRAPHCOLOR_BAR],
-                     custom, inset, corner);
-
-   // Draw the gap from the value up to its limit
+   // Draw the gap from the value up to its limit.  A custom bar runs this slice
+   // from the left and paints the value over it, so both get a rounded right end
    if (info->style & GCS_LIMITBAR && info->limit_value > info->current_value)
    {
       limit_pos = (info->limit_value - info->min_value) * BAR_POS_SCALE /
          (info->max_value - info->min_value);
       // Clamp in case the limit sits outside the min/max range
       limit_pos = std::clamp(limit_pos, 0L, BAR_POS_SCALE);
-      limit_pos = limit_pos * (rect.right - rect.left - 2 * inset) / BAR_POS_SCALE + rect.left + inset;
-      GraphCtlFillSlice(hdc, &rect, bar_pos, limit_pos, colors[GRAPHCOLOR_LIMITBAR],
-                        custom, inset, corner);
+      limit_pos = limit_pos * (fill_right - rect.left - 2 * inset) / BAR_POS_SCALE + rect.left + inset;
+      GraphCtlFillSlice(hdc, &rect, custom ? rect.left + inset : bar_pos, limit_pos,
+                        colors[GRAPHCOLOR_LIMITBAR], custom, inset, corner);
       slider_pos = limit_pos;
    }
+
+   GraphCtlFillSlice(hdc, &rect, rect.left + inset, bar_pos, colors[GRAPHCOLOR_BAR],
+                     custom, inset, corner);
 
    // Frame outline
    SelectObject(hdc, pens[GRAPHCOLOR_FRAME]);
