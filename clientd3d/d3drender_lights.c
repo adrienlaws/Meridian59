@@ -125,7 +125,7 @@ static int CalculateFlickeredIntensity(const LightSourceData& lightData, float* 
    float flickerBrightness = 1.0f;
    int flickeredIntensity;
 
-   if (lightData.objFlags & (OF_FLICKERING | OF_FLASHING))
+   if (ObjectHasLightEffect(lightData.objFlags))
    {
       flickerBrightness = (float)lightData.lightAdjust / GetFlickerLevel();
       flickeredIntensity = (int)(D3DLightScale(lightData.baseIntensity) * flickerBrightness);
@@ -356,7 +356,7 @@ void D3DLMapsStaticGet(room_type* room, const LightCacheUpdateParams& params)
          if (flickerPerfProfile)
          {
             totalLightCount++;
-            if (pRNode->obj.flags & (OF_FLICKERING | OF_FLASHING))
+            if (ObjectHasLightEffect(pRNode->obj.flags))
                flickerCount++;
          }
       }
@@ -385,7 +385,7 @@ void D3DLMapsStaticGet(room_type* room, const LightCacheUpdateParams& params)
                              pRNode->obj.dLighting.intensity))
             continue;
 
-         bool isFlickering = (pRNode->obj.flags & (OF_FLICKERING | OF_FLASHING)) != 0;
+         bool isFlickering = ObjectHasLightEffect(pRNode->obj.flags);
 
          // Select target cache: flickering lights go to dynamic cache, static lights to main cache
          d_light_cache* targetCache = isFlickering ? lightCacheDynamic : lightCache;

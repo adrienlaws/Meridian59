@@ -71,6 +71,7 @@ M59EXPORT COLORREF GetColor(WORD color);
 M59EXPORT HBRUSH GetBrush(WORD color);
 M59EXPORT Theme ThemeCurrent(void);
 int MainThemeResourceId(int id);
+M59EXPORT COLORREF ThemeBorderColor(void);
 COLORREF ThemeMenuBarColor(void);
 bool ThemeUsesDarkTitleBar(void);
 M59EXPORT bool ThemeUsesCustomStatBars(void);
