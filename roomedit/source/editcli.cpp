@@ -102,6 +102,10 @@
 	#include "prefdlg.h"
 #endif
 
+#ifndef __viewbmp_h
+	#include "viewbmp.h"
+#endif
+
 #ifndef __levels_h
 	#include "levels.h"
 #endif
@@ -141,6 +145,11 @@ static const char* _apszDirection[] =
 static const char* _apszSpeed[] =
 {
 	"none", "slow", "med", "fast"
+};
+
+static const char* _apszTranslucency[] =
+{
+	"0", "75", "50", "25"
 };
 
 //
@@ -324,7 +333,6 @@ TEditorClient::TEditorClient (TWindow* parent, char *_levelName,
 	pVertexInfo = new TInfoControl (this, 234, 2, "Vertex");
 	pSectorInfo = new TInfoControl (this, 235, 9, "Sector");
 
-
 	// Retrieve pointer to status bar of MainFrame
 	TMainFrame *mainFrame =
 		TYPESAFE_DOWNCAST (GetApplication()->GetMainWindow(), TMainFrame);
@@ -412,6 +420,9 @@ TEditorClient::TEditorClient (TWindow* parent, char *_levelName,
 //
 TEditorClient::~TEditorClient ()
 {
+	// Destroy shared texture preview before the editor window.
+	CloseTexturePreview ();
+
 	// Destroy window
 	Destroy();
 
@@ -1981,7 +1992,7 @@ void TEditorClient::DisplayObjectInfo (int objtype, SHORT objnum)
 			LineDef *pLineDef = &LineDefs[objnum];
 
 			pLineDefInfo->SetStyle (TA_CENTER, BLACK);
-			pLineDefInfo->Insert ("Selected LineDef (#%d)", objnum);
+			pLineDefInfo->Insert ("Selected LineDef %d", objnum);
 
 			pLineDefInfo->SetStyle (TA_LEFT, LIGHTBLUE);
 			pLineDefInfo->Insert ("Flags: %s", 
@@ -2053,7 +2064,7 @@ void TEditorClient::DisplayObjectInfo (int objtype, SHORT objnum)
 			}
 			else
 				pSideDef1Info->SetStyle (TA_LEFT, LIGHTBLUE);
-			pSideDef1Info->Insert ("Upper texture:  %s", texname);
+			pSideDef1Info->Insert ("Upper texture: %s", texname);
 
 			// Lower texture
 			pSideDef1Info->SetStyle (TA_LEFT, LIGHTBLUE);
@@ -2065,12 +2076,17 @@ void TEditorClient::DisplayObjectInfo (int objtype, SHORT objnum)
 			}
 			else
 				pSideDef1Info->SetStyle (TA_LEFT, LIGHTBLUE);
-			pSideDef1Info->Insert ("Lower texture:  %s", texname);
+			pSideDef1Info->Insert ("Lower texture: %s", texname);
 
 			pSideDef1Info->SetStyle (TA_LEFT, LIGHTBLUE);
-			pSideDef1Info->Insert ("Tex. offset:  (%d, %d)", pSideDef1->xoff, pSideDef1->yoff);
-			pSideDef1Info->Insert ("Sector:         #%d", s1);
-			pSideDef1Info->Insert ("User id #:       %d", pSideDef1->user_id);
+			BYTE tpos = LineDefs[objnum].translucency_pos;
+			if (tpos > 3)
+				tpos = 0;
+			pSideDef1Info->Insert ("Translucency: %s", _apszTranslucency[tpos]);
+
+			pSideDef1Info->SetStyle (TA_LEFT, LIGHTBLUE);
+			pSideDef1Info->Insert ("Tex. offset: %d, %d", pSideDef1->xoff, pSideDef1->yoff);
+			pSideDef1Info->Insert ("Sector: %d", s1);
 		}
 		pSideDef1Info->EndInsert();
 
@@ -2104,7 +2120,7 @@ void TEditorClient::DisplayObjectInfo (int objtype, SHORT objnum)
 			}
 			else
 				pSideDef2Info->SetStyle (TA_LEFT, LIGHTBLUE);
-			pSideDef2Info->Insert ("Upper texture:  %s", texname);
+			pSideDef2Info->Insert ("Upper texture: %s", texname);
 
 			// Lower texture
 			pSideDef2Info->SetStyle (TA_LEFT, LIGHTBLUE);
@@ -2116,12 +2132,17 @@ void TEditorClient::DisplayObjectInfo (int objtype, SHORT objnum)
 			}
 			else
 				pSideDef2Info->SetStyle (TA_LEFT, LIGHTBLUE);
-			pSideDef2Info->Insert ("Lower texture:  %s", texname);
+			pSideDef2Info->Insert ("Lower texture: %s", texname);
 
 			pSideDef2Info->SetStyle (TA_LEFT, LIGHTBLUE);
-			pSideDef2Info->Insert ("Tex. offset:  (%d %d)", pSideDef2->xoff, pSideDef2->yoff);
-			pSideDef2Info->Insert ("Sector:         #%d", s2);
-			pSideDef2Info->Insert ("User id #:       %d", pSideDef2->user_id);
+			BYTE tneg = LineDefs[objnum].translucency_neg;
+			if (tneg > 3)
+				tneg = 0;
+			pSideDef2Info->Insert ("Translucency: %s", _apszTranslucency[tneg]);
+
+			pSideDef2Info->SetStyle (TA_LEFT, LIGHTBLUE);
+			pSideDef2Info->Insert ("Tex. offset: %d, %d", pSideDef2->xoff, pSideDef2->yoff);
+			pSideDef2Info->Insert ("Sector: %d", s2);
 		}
 		pSideDef2Info->EndInsert();
 		break;
@@ -3093,7 +3114,7 @@ void TEditorClient::CmModeNext ()
 			NewMode = OBJ_SECTORS;
 			break;
 		case OBJ_SECTORS:
-			NewMode = OBJ_THINGS;
+			NewMode = OBJ_VERTEXES;
 			break;
 	}
 
@@ -3119,7 +3140,7 @@ void TEditorClient::CmModePrev ()
 			NewMode = OBJ_SECTORS;
 			break;
 		case OBJ_VERTEXES:
-			NewMode = OBJ_THINGS;
+			NewMode = OBJ_SECTORS;
 			break;
 		case OBJ_LINEDEFS:
 			NewMode = OBJ_VERTEXES;
