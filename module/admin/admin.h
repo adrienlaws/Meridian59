@@ -46,6 +46,7 @@ extern void AdminNewLine(char *str);
 extern void AdminDisplayOwner(int num);
 extern void AdminDisplayObject(int num, char *class_name);
 extern void AdminShowProperty(int index);
+extern void AdminSelectProperty(const char *find_text);
 
 #endif /* #ifndef _ADMIN_H */
 

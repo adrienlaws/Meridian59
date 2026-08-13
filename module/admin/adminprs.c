@@ -199,6 +199,7 @@ void AdminStartResponse(int type)
    switch (type)
    {
    case ADMIN_OBJECT:
+      SetDlgItemText(hAdminDlg, IDC_FINDPROP, "");
       WindowBeginUpdate(hObjectList);
       ListBox_ResetContent(hObjectList);
       break;
@@ -371,6 +372,38 @@ void AdminShowProperty(int index)
       sprintf(command, "show string %s", value);
       SendMessage(hAdminDlg, BK_SENDCMD, 0, (LPARAM) command);
       break;
+   }
+}
+/****************************************************************************/
+/*
+ * AdminSelectProperty:  Select the first row of the object list box whose
+ *   text contains find_text, ignoring case, and scroll it into view.  Does
+ *   nothing when find_text is empty or when no row contains it.
+ */
+void AdminSelectProperty(const char *find_text)
+{
+   int count, i;
+   char line[MAX_PROPERTYLEN];
+
+   if (find_text == NULL || find_text[0] == '\0')
+      return;
+
+   count = ListBox_GetCount(hObjectList);
+   for (i = 0; i < count; i++)
+   {
+      ListBox_GetText(hObjectList, i, line);
+
+      // Substring search with case-insensitive comparison
+      const char *ptr = line;
+      while (*ptr != '\0')
+      {
+         if (_strnicmp(ptr, find_text, strlen(find_text)) == 0)
+         {
+            ListBox_SetCurSel(hObjectList, i);
+            return;
+         }
+         ptr++;
+      }
    }
 }
 /****************************************************************************/

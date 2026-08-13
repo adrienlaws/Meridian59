@@ -26,6 +26,7 @@ int    current_obj;                      // Object we're currently displaying, i
 static ChildPlacement admin_controls[] = {
 { IDC_ADMINTEXT,   RDI_ALL },
 { IDC_TELEPORT,    RDI_BOTTOM | RDI_LEFT },
+{ IDC_FINDPROP,    RDI_BOTTOM | RDI_RIGHT },
 
 { IDC_USERFRAME,   RDI_BOTTOM | RDI_LEFT },
 { IDC_INVALIDATE,  RDI_BOTTOM | RDI_LEFT },
@@ -345,15 +346,31 @@ void AdminDlgCommand(HWND hDlg, int cmd_id, HWND hwndCtl, UINT codeNotify)
       SendMessage(hAdminDlg, BK_SENDCMD, 0, (LPARAM) command);
       break;
 
+   case IDC_FINDPROP:
+      if (codeNotify == EN_UPDATE)
+      {
+         char find_text[MAX_PROPERTYLEN];
+         GetDlgItemText(hDlg, IDC_FINDPROP, find_text, sizeof(find_text));
+         AdminSelectProperty(find_text);
+      }
+      break;
+
    case IDOK:
+      // Enter in the Find box moves focus to the object list
+      if (GetFocus() == GetDlgItem(hDlg, IDC_FINDPROP))
+      {
+         SetFocus(hObjectList);
+         break;
+      }
+
       Edit_GetText(hInput, command, MAX_ADMIN);
-      
+
       if (!stricmp("quit", command))
       {
 	 DestroyWindow(hDlg);
 	 break;
       }
-      
+
       SendMessage(hDlg, BK_SENDCMD, 0, (LPARAM) command);
       break;
       
