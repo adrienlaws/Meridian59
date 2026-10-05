@@ -4659,7 +4659,7 @@ messages:
       }
 
       % Should we print resistance message?
-      if report_resistance
+      if report_resistance AND NOT absolute
       {
          if IsClass(what,&User)
          {
