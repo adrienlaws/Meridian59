@@ -23,6 +23,10 @@ constants:
    KARMA_TUNE_A_INVERSE = 20
    KARMA_TUNE_B_INVERSE = 5
 
+   % How fast dropped loot slides out from the corpse, in tenths of a square
+   %  per second.
+   LOOT_SCATTER_SPEED = 60
+
    %%% COMBAT PACING PARAMETERS
    % These parameters control how often it is possible to have combat
    % assuming readily available opponents.   Xian 4/3/96
@@ -8050,6 +8054,7 @@ messages:
       % Create the corpse.
       oBody = Send(self,@CreateCorpse);
       Send(oRoom,@NewHold,#what=oBody,#new_row=iRow,#new_col=iCol,#fine_row=16,#fine_col=16, #new_angle=iAngle);
+      Send(self,@ThrowBodyParts,#oRoom=oRoom,#oCorpse=oBody,#iRow=iRow,#iCol=iCol);
 
       % Start losing stuff if applicable.
       if NOT bNo_drop_death
@@ -8087,6 +8092,7 @@ messages:
                   }
                   
                   Send(oRoom,@NewHold,#what=i,#new_row=iRow,#new_col=iCol,#merge=FALSE);
+                  Send(self,@ScatterLoot,#oRoom=oRoom,#oItem=i,#iRow=iRow,#iCol=iCol);
                } 
             }
          }
@@ -8423,6 +8429,129 @@ messages:
                     #BodyTranslation=Send(self,@GetDefaultShirtTranslation),
                     #LegsTranslation=Send(self,@GetDefaultPantsTranslation),
                     #inKocatan = inKocatan,#DearlyDeparted=self);
+   }
+
+   ThrowBodyParts(oRoom = $, oCorpse = $, iRow = 1, iCol = 1)
+   "Throws the player's head, arms, and legs from the corpse to random "
+   "squares a step or two away, one after another.  Each part flies as a "
+   "projectile, then lies on the floor until it fades."
+   {
+      local i, oPart, iSkin, lFace, lParts, iRows, iCols, iNewRow, iNewCol,
+            iRowOffset, iColOffset, iFar, iNear, iTry, iOrder;
+
+      if oRoom = $ OR oCorpse = $
+      {
+         return;
+      }
+
+      iSkin = Send(self,@GetSkinColor);
+      % The sad face.
+      lFace = $;
+      if prMouth <> $
+      {
+         lFace = Cons([prMouth, HS_MOUTH, iSkin, UA_SAD],lFace);
+      }
+
+      if prEyes <> $
+      {
+         lFace = Cons([prEyes, HS_EYES, iSkin, UA_SAD],lFace);
+      }
+
+      if prNose <> $
+      {
+         lFace = Cons([prNose, HS_NOSE, iSkin, 1],lFace);
+      }
+
+      if poHair_remove = $ AND prToupee <> $
+      {
+         lFace = Cons([prToupee, HS_TOUPEE, Send(self,@GetHairColor), 1],lFace);
+      }
+
+      lParts = [ [BODYPART_HEAD, prHead, iSkin, lFace],
+                 [BODYPART_ARM, prLeft_arm, Send(self,@GetArmsTranslation), $],
+                 [BODYPART_ARM, prRight_arm, Send(self,@GetArmsTranslation), $],
+                 [BODYPART_LEGS, prLegs, Send(self,@GetLegsTranslation), $] ];
+
+      iRows = Send(oRoom,@GetRoomRows);
+      iCols = Send(oRoom,@GetRoomCols);
+      iOrder = 0;
+      for i in lParts
+      {
+         if Nth(i,2) <> $
+         {
+            % Land a step or two away, on a square the corpse could reach in a
+            %  straight line, so no part lands inside a wall.
+            iNewRow = iRow;
+            iNewCol = iCol;
+            iTry = 0;
+            while iTry < 8
+            {
+               iTry = iTry + 1;
+               iRowOffset = Random(0,4) - 2;
+               iColOffset = Random(0,4) - 2;
+               if (iRowOffset <> 0 OR iColOffset <> 0)
+                  AND iRow + iRowOffset >= 1 AND iRow + iRowOffset <= iRows
+                  AND iCol + iColOffset >= 1 AND iCol + iColOffset <= iCols
+                  AND Send(oRoom,@ReqSomethingMoved,#what=oCorpse,
+                           #new_row=iRow + iRowOffset,#new_col=iCol + iColOffset)
+               {
+                  iNewRow = iRow + iRowOffset;
+                  iNewCol = iCol + iColOffset;
+
+                  break;
+               }
+            }
+
+            % Rough distance in tenths of a square, for the landing time.
+            iFar = Abs(iNewRow - iRow);
+            iNear = Abs(iNewCol - iCol);
+            if iNear > iFar
+            {
+               iFar = Abs(iNewCol - iCol);
+               iNear = Abs(iNewRow - iRow);
+            }
+
+            oPart = Create(&BodyPart,#part=First(i),#who=self,
+                           #icon=Nth(i,2),#translation=Nth(i,3),
+                           #overlays=Nth(i,4),#corpse=oCorpse,#order=iOrder,
+                           #distance=10*iFar + 5*iNear);
+            Send(oRoom,@NewHold,#what=oPart,#new_row=iNewRow,#new_col=iNewCol,
+                 #fine_row=Random(0,FINENESS-1),#fine_col=Random(0,FINENESS-1));
+            iOrder = iOrder + 1;
+         }
+      }
+
+      return;
+   }
+
+   ScatterLoot(oRoom = $, oItem = $, iRow = 1, iCol = 1)
+   "Slides a dropped item from the corpse's square to a random square up to "
+   "two squares away, if the room allows the move."
+   {
+      local iNewRow, iNewCol;
+
+      if oRoom = $ OR oItem = $ OR Send(oItem,@GetOwner) <> oRoom
+      {
+         return;
+      }
+
+      iNewRow = iRow + Random(0,4) - 2;
+      iNewCol = iCol + Random(0,4) - 2;
+
+      % A move past the edge of the room would send the item to the next room.
+      if iNewRow < 1 OR iNewRow > Send(oRoom,@GetRoomRows)
+         OR iNewCol < 1 OR iNewCol > Send(oRoom,@GetRoomCols)
+         OR NOT Send(oRoom,@ReqSomethingMoved,#what=oItem,#new_row=iNewRow,
+                     #new_col=iNewCol)
+      {
+         return;
+      }
+
+      Send(oRoom,@SomethingMoved,#what=oItem,#new_row=iNewRow,#new_col=iNewCol,
+           #fine_row=Random(0,FINENESS-1),#fine_col=Random(0,FINENESS-1),
+           #speed=LOOT_SCATTER_SPEED);
+
+      return;
    }
 
    FreeHands()

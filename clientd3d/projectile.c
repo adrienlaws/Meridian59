@@ -120,6 +120,28 @@ void ProjectileAdd(Projectile *p, ID source_obj, ID dest_obj, BYTE speed, WORD f
 }
 /********************************************************************/
 /*
+ * ProjectileBounceHeight:  Return the height above the floor, in FINENESS
+ *   units, of a bouncing projectile that has covered the given share of its
+ *   trip.  It hops three times, each hop lower than the last.
+ */
+static int ProjectileBounceHeight(float progress)
+{
+   static const float hop_starts[] = { 0.0f, 0.5f, 0.8f };
+   static const float hop_ends[] = { 0.5f, 0.8f, 1.0f };
+   static const float hop_heights[] = { FINENESS * 1.0f, FINENESS * 0.4f, FINENESS * 0.15f };
+
+   for (int i = 0; i < 3; i++)
+   {
+      if (progress < hop_ends[i])
+      {
+         float t = (progress - hop_starts[i]) / (hop_ends[i] - hop_starts[i]);
+         return (int) (hop_heights[i] * 4.0f * t * (1.0f - t));
+      }
+   }
+   return 0;
+}
+/********************************************************************/
+/*
  * ProjectilesMove; called for every frame.  
  *   dt is number of milliseconds since last time animation timer went off.
  * Return True iff some projectile moved.
@@ -143,6 +165,11 @@ bool ProjectilesMove(int dt)
          current_room.projectiles = list_delete_item(current_room.projectiles, p, 
                                                      CompareProjectiles);
          SafeFree(p);
+      }
+      else if (p->flags & PROJ_FLAG_BOUNCE)
+      {
+         p->motion.z = GetPointFloor(p->motion.x, p->motion.y)
+            + ProjectileBounceHeight(p->motion.progress);
       }
       else if (p->flags & PROJ_FLAG_FOLLOWGROUND)
       {

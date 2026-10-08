@@ -14,6 +14,8 @@
 
 /* Flags bit values for Projectile structure */
 #define PROJ_FLAG_FOLLOWGROUND	 0x0001
+#define PROJ_FLAG_BOUNCE	 0x0004
+#define PROJ_FLAG_ENLARGED	 0x0008
 
 typedef struct {
    ID      icon_res;             // Icon resource of bitmap

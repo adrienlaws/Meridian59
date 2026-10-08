@@ -67,7 +67,8 @@
    LOOK_YES          = 0
    LOOK_NO           = 0x00000040
 
-   % unused       = 0x00000080
+   % Drawn larger than its bitmap, by clients that know the flag.
+   ENLARGED_YES      = 0x00000080
 
    INVISIBLE_YES     = 0x00000100
    INVISIBLE_NO      = 0
@@ -135,6 +136,8 @@
    PROJ_FLAG_NONE = 0x00
    PROJ_FLAG_FOLLOW_GROUND = 0x01
    PROJ_FLAG_LIGHT_SOURCE = 0x02
+   PROJ_FLAG_BOUNCE = 0x04
+   PROJ_FLAG_ENLARGED = 0x08
 
    % Flags for dynamic lights
    LIGHT_FLAG_NONE = 0x0000
@@ -2233,6 +2236,12 @@
    EVENT_REST = 8
    % Player was disrupted by something external trying to disrupt.
    EVENT_DISRUPT = 9
+
+   %%% Body parts thrown when a player dies, see bodypart.kod
+
+   BODYPART_HEAD = 1
+   BODYPART_ARM = 2
+   BODYPART_LEGS = 3
 
    %%% Hot spot definitions
 

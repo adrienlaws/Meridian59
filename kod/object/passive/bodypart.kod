@@ -1,0 +1,263 @@
+% Meridian 59, Copyright 1994-2012 Andrew Kirmse and Chris Kirmse.
+% All rights reserved.
+%
+% This software is distributed under a license that is described in
+% the LICENSE file that accompanies it.
+%
+% Meridian is a registered trademark.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+BodyPart is PassiveObject
+
+constants:
+
+   include blakston.khd
+   include protocol.khd
+
+   % How long a part stays on the floor, in milliseconds.
+   BODYPART_TIME = 60000
+
+   % Projectile speed while the part flies, in squares per second.
+   BODYPART_SPEED = 1
+
+   % Time between one part leaving the corpse and the next, in milliseconds.
+   BODYPART_STAGGER = 250
+
+   % Clients cap a projectile's flight at this many milliseconds.
+   BODYPART_MAX_FLIGHT = 2000
+
+resources:
+
+   bodypart_hidden_icon = blank.bgf
+
+   bodypart_head_name_rsc = "severed head"
+   bodypart_arm_name_rsc = "severed arm"
+   bodypart_legs_name_rsc = "pair of legs"
+
+   bodypart_head_desc_rsc = "The head of %q.  It appears %s lost %s head."
+   bodypart_arm_desc_rsc = "An arm that belonged to %q.  %s could use a hand."
+   bodypart_legs_desc_rsc =       "The legs of %q.  It appears %s did not run fast enough."
+
+properties:
+
+   vrName = bodypart_head_name_rsc
+   vrIcon = bodypart_hidden_icon
+   prIcon = $
+   piTranslation = 0
+   pbLanded = FALSE
+   ptLand = $
+   ptLaunch = $
+   poCorpse = $
+   piDistance = 0
+   piPart = BODYPART_HEAD
+
+   % The player's name and pronouns, for the description.
+   prPlayer_name = $
+   prHeShe = $
+   prCapHeShe = $
+   prHisHer = $
+
+   % [icon, hotspot, translation, group] for each overlay drawn on the part.
+   plOverlays = $
+
+   ptDelete = $
+
+messages:
+
+   Constructor(part = BODYPART_HEAD, who = $, icon = $, translation = 0,
+               overlays = $, corpse = $, order = 0, distance = 0)
+   {
+      piPart = part;
+      vrName = bodypart_head_name_rsc;
+      if piPart = BODYPART_ARM
+      {
+         vrName = bodypart_arm_name_rsc;
+      }
+
+      if piPart = BODYPART_LEGS
+      {
+         vrName = bodypart_legs_name_rsc;
+      }
+
+      if who <> $
+      {
+         prPlayer_name = Send(who,@GetName);
+         prHeShe = Send(who,@GetHeShe);
+         prCapHeShe = Send(who,@GetHeShe,#cap=TRUE);
+         prHisHer = Send(who,@GetHisHer);
+      }
+
+      % Hidden until the flight lands.  distance is in tenths of a square, and
+      %  order staggers the parts leaving the corpse.
+      prIcon = icon;
+      piTranslation = translation;
+      plOverlays = overlays;
+      poCorpse = corpse;
+      piDistance = distance;
+      ptLaunch = CreateTimer(self,@LaunchTimer,order*BODYPART_STAGGER + 1);
+      ptDelete = CreateTimer(self,@DeleteTimerMessage,BODYPART_TIME);
+
+      propagate;
+   }
+
+   LaunchTimer()
+   {
+      ptLaunch = $;
+      if poOwner = $
+      {
+         return;
+      }
+
+      if poCorpse = $ OR Send(poCorpse,@GetOwner) <> poOwner
+      {
+         Send(self,@LandTimer);
+
+         return;
+      }
+
+      Send(poOwner,@SomethingShot,#who=poCorpse,#target=self,#projectile=self,
+           #flags=PROJ_FLAG_BOUNCE | PROJ_FLAG_ENLARGED);
+      ptLand = CreateTimer(self,@LandTimer,
+                           bound(piDistance*100/BODYPART_SPEED,0,BODYPART_MAX_FLIGHT)
+                           + 200);
+
+      return;
+   }
+
+   LandTimer()
+   {
+      ptLand = $;
+      pbLanded = TRUE;
+      vrIcon = prIcon;
+      if poOwner <> $
+      {
+         Send(poOwner,@SomethingChanged,#what=self);
+      }
+
+      return;
+   }
+
+   DeleteTimerMessage()
+   {
+      ptDelete = $;
+      Send(self,@Delete);
+
+      return;
+   }
+
+   Delete()
+   {
+      if ptDelete <> $
+      {
+         DeleteTimer(ptDelete);
+         ptDelete = $;
+      }
+
+      if ptLand <> $
+      {
+         DeleteTimer(ptLand);
+         ptLand = $;
+      }
+
+      if ptLaunch <> $
+      {
+         DeleteTimer(ptLaunch);
+         ptLaunch = $;
+      }
+
+      propagate;
+   }
+
+   GetObjectFlags()
+   {
+      return viObject_flags | ENLARGED_YES;
+   }
+
+   ShowDesc()
+   {
+      if prPlayer_name = $
+      {
+         propagate;
+      }
+
+      if piPart = BODYPART_ARM
+      {
+         AddPacket(4,bodypart_arm_desc_rsc, STRING_RESOURCE,prPlayer_name,
+                   4,prCapHeShe);
+
+         return;
+      }
+
+      if piPart = BODYPART_LEGS
+      {
+         AddPacket(4,bodypart_legs_desc_rsc, STRING_RESOURCE,prPlayer_name,
+                   4,prHeShe);
+
+         return;
+      }
+
+      AddPacket(4,bodypart_head_desc_rsc, STRING_RESOURCE,prPlayer_name,
+                4,prHeShe, 4,prHisHer);
+
+      return;
+   }
+
+   SendAnimation()
+   {
+      if piTranslation <> 0
+      {
+         AddPacket(1,ANIMATE_TRANSLATION, 1,piTranslation);
+      }
+
+      AddPacket(1,ANIMATE_NONE, 2,1);
+
+      return;
+   }
+
+   SendOverlays()
+   {
+      local i;
+
+      if NOT pbLanded
+      {
+         AddPacket(1,0);
+
+         return;
+      }
+
+      AddPacket(1,Length(plOverlays));
+      for i in plOverlays
+      {
+         AddPacket(4,Nth(i,1), 1,Nth(i,2), 1,ANIMATE_TRANSLATION, 1,Nth(i,3),
+                   1,ANIMATE_NONE, 2,Nth(i,4));
+      }
+
+      return;
+   }
+
+   GetProjectileIcon()
+   {
+      return prIcon;
+   }
+
+   GetProjectileSpeed()
+   {
+      return BODYPART_SPEED;
+   }
+
+   SendProjectileAnimation()
+   {
+      Send(self,@SendAnimation);
+
+      return;
+   }
+
+   GetProjectileLightFlags()
+   {
+      return LIGHT_FLAG_NONE;
+   }
+
+
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

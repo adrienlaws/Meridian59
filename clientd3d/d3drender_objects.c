@@ -16,6 +16,9 @@
 
 static const auto TRANSLUCENT_FLAGS = OF_TRANSLUCENT25 | OF_TRANSLUCENT50 | OF_TRANSLUCENT75 | OF_DITHERTRANS;
 
+// How much bigger enlarged objects and projectiles are drawn.
+static const float ENLARGED_SCALE = 1.3f;
+
 // Interfaces
 
 static void D3DRenderNamesDraw3D(
@@ -73,6 +76,21 @@ static bool IsInvisibleEffect(int flags) {
 	// it is treated as grey scale and translucent (such as logoff ghosts). 
 	// Without using OF_DITHERINVIS below it would be incorrectly treated as invisible.
 	return (flags & (OF_INVISIBLE | OF_DITHERINVIS)) == OF_INVISIBLE;
+}
+
+/************************************************************************/
+/*
+ * ApplyEnlargedScale:  Scales the rotation matrix of an enlarged object or
+ *   projectile, so its bitmap and overlays grow from its base.
+ */
+static void ApplyEnlargedScale(D3DMATRIX* rot, bool enlarged)
+{
+	if (!enlarged)
+		return;
+
+	D3DMATRIX scale;
+	MatrixScale(&scale, ENLARGED_SCALE);
+	MatrixMultiply(rot, &scale, rot);
 }
 
 // Computes scaling factors for POV overlays based on current resolution.
@@ -1081,6 +1099,7 @@ void D3DRenderOverlaysDraw(
 
 					MatrixRotateY(&rot, static_cast<float>(angleHeading) * GAME_ANGLE_TO_RAD);
 					MatrixTranspose(&rot, &rot);
+					ApplyEnlargedScale(&rot, (pRNode->obj.flags & OF_ENLARGED) != 0);
 					MatrixTranslate(&mat, (float)pRNode->motion.x, (float)std::max(bottom,
 						(long)pRNode->motion.z) - depthf, (float)pRNode->motion.y);
 					MatrixMultiply(&pChunk->xForm, &rot, &mat);
@@ -1589,6 +1608,7 @@ void D3DRenderObjectsDraw(
 
 		MatrixRotateY(&rot, static_cast<float>(angleHeading) * GAME_ANGLE_TO_RAD);
 		MatrixTranspose(&rot, &rot);
+		ApplyEnlargedScale(&rot, (pRNode->obj.flags & OF_ENLARGED) != 0);
 		MatrixTranslate(&mat, (float)pRNode->motion.x, std::max(bottom, (long)pRNode->motion.z) - depth,
 			(float)pRNode->motion.y);
 		MatrixMultiply(&pChunk->xForm, &rot, &mat);
@@ -1981,6 +2001,7 @@ int D3DRenderProjectilesDraw(const ObjectsRenderParams& objectsRenderParams)
 
 		MatrixRotateY(&rot, static_cast<float>(angleHeading) * GAME_ANGLE_TO_RAD);
 		MatrixTranspose(&rot, &rot);
+		ApplyEnlargedScale(&rot, (pProjectile->flags & PROJ_FLAG_ENLARGED) != 0);
 		MatrixTranslate(&mat, (float)pProjectile->motion.x, (float)pProjectile->motion.z,
 			(float)pProjectile->motion.y);
 		MatrixMultiply(&pChunk->xForm, &rot, &mat);
