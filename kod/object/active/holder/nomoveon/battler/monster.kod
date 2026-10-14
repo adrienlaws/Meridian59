@@ -5400,6 +5400,13 @@ messages:
          {
             continue;
          }
+
+         % Only a battler can be an ally.  A flagpole or a logoff ghost has no
+         % master to ask about.
+         if NOT IsClass(oObject,&Battler)
+         {
+            continue;
+         }
          
          % is what it looks like, an ally?
          oBodyType = oObject;
