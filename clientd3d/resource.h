@@ -622,6 +622,7 @@
 #define IDC_ATTACK_MOD2                 3630
 #define IDI_KEYBIND                     3631
 #define IDS_WARNING_TITLE               3632
+#define IDS_ERROR_TITLE                 3656
 #define IDS_SOFTWARERENDERER_WARN       3633
 #define IDS_HELP_TITLE                  3634
 #define IDS_BINDING_HELP                3635

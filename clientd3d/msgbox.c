@@ -45,7 +45,8 @@ void _cdecl ClientError(HINSTANCE hModule, HWND hParent, int fmt_id, ...)
    if (LoadString(hModule, (int) fmt_id, fmt, ERROR_LENGTH - 1) == 0)
    {
       snprintf(msg, sizeof(msg), "Can't load message string #%d", fmt_id);
-      ClientMessageBox(hParent, msg, szAppName, MB_APPLMODAL);
+      ClientMessageBox(hParent, msg, GetString(hInst, IDS_ERROR_TITLE),
+		       MB_APPLMODAL);
       SetFocus(hwndFocus);
       return;
    }
@@ -54,7 +55,8 @@ void _cdecl ClientError(HINSTANCE hModule, HWND hParent, int fmt_id, ...)
    vsnprintf(msg, sizeof(msg), fmt, marker);
    va_end(marker);
 
-   ClientMessageBox(hParent, msg, szAppName, MB_APPLMODAL | MB_ICONEXCLAMATION);
+   ClientMessageBox(hParent, msg, GetString(hInst, IDS_ERROR_TITLE),
+		    MB_APPLMODAL | MB_ICONEXCLAMATION);
    SetFocus(hwndFocus);
 
    error_dialog_up = false;
@@ -167,6 +169,8 @@ INT_PTR CALLBACK ClientMsgBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM
    HWND hOK, hCancel, hOK2, hCancel2;
    HFONT hFont;
    RECT dlg_rect, edit_rect;
+   FLASHWINFO flash;
+   DWORD front_process;
 
    switch (message)
    {
@@ -276,6 +280,29 @@ INT_PTR CALLBACK ClientMsgBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM
       }
 	 	 
       CenterWindow(hDlg, GetParent(hDlg));
+
+      // Raise the box, but only when this client is already the front
+      // application.  Windows refuses the change otherwise, and its refusal
+      // flashes the main window's taskbar button on top of the box's own,
+      // which leaves two entries blinking for one box.
+      front_process = 0;
+      GetWindowThreadProcessId(GetForegroundWindow(), &front_process);
+
+      if (front_process == GetCurrentProcessId())
+	 SetForegroundWindow(hDlg);
+      else
+	 // In the background the box cannot take focus.  Make it its owner's
+	 // active popup so it is reachable, and let the flash below point at
+	 // its own taskbar button.
+	 SetActiveWindow(hDlg);
+
+      flash.cbSize = sizeof(flash);
+      flash.hwnd = hDlg;
+      flash.dwFlags = FLASHW_ALL | FLASHW_TIMERNOFG;
+      flash.uCount = 0;
+      flash.dwTimeout = 0;
+      FlashWindowEx(&flash);
+
       return 0;
 
    case WM_COMMAND:

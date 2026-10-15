@@ -357,6 +357,7 @@ END
 
 IDD_MSGBOX DIALOG 0, 0, 236, 50
 STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
 FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,74,32,44,14
@@ -1012,6 +1013,7 @@ END
 STRINGTABLE
 BEGIN
 	IDS_WARNING_TITLE			    "Aviso"
+	IDS_ERROR_TITLE				    "Meridian 59 - Erro"
     IDS_SOFTWARERENDERER_WARN		"O renderizador de software pode ter sido ativado devido a um problema com a configuração do seu vídeo.\n\t\t Desativá-lo pode fazer com que o jogo não funcione."
 	IDS_HELP_TITLE					"Ajuda"
 	IDS_BINDING_HELP 				"Como vincular um comando:\n\n * Clique no botão ao lado do comando que deseja vincular. Esse botão mostrará a tecla atualmente atribuída ao comando.\n\n * Quando a janela pop-up aparecer, pressione e solte a tecla e/ou o botão do mouse\n que deseja vincular a esse comando. Por exemplo, pressionar o botão ao lado de\n 'avançar' e pressionar a tecla W fará com que essa seja a nova tecla para avançar.\n\n * Teclas modificadoras como Shift, Alt e Ctrl podem ser usadas em combinação com a tecla principal (exemplo: W+Shift).\n\n * Se desejar alterar apenas a tecla modificadora de um comando, pressione o botão\n marcado com um '+' ao lado do botão de vínculo e selecione uma tecla modificadora da lista exibida.\n\n * O modificador 'Qualquer' significa que qualquer tecla modificadora pode ser pressionada junto com a tecla principal,\n e ainda funcionará. Assim, W+qualquer significa que W+Shift, W+Alt, W+Ctrl e apenas W executarão o comando especificado.\n\n * Se cometer um erro, você pode pressionar o botão 'Restaurar Padrões' para redefinir todas as atribuições de teclas para os padrões.\n\n * Quando terminar de configurar, pressione 'OK' para salvar e sair.\n Ou pressione 'Cancelar' para sair sem salvar suas alterações."
@@ -1377,6 +1379,7 @@ END
 
 IDD_MSGBOX DIALOG 0, 0, 236, 50
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
 FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "Bestätigen",IDOK,74,32,44,14
@@ -2036,6 +2039,7 @@ END
 STRINGTABLE
 BEGIN
 	IDS_WARNING_TITLE			    "Warnung"
+	IDS_ERROR_TITLE				    "Meridian 59 - Fehler"
     IDS_SOFTWARERENDERER_WARN		"Die Software-Rendering-Funktion wurde möglicherweise aufgrund eines Problems mit Ihrer Videoeinstellung aktiviert.\n\t\t Das Deaktivieren kann dazu führen, dass das Spiel nicht mehr läuft."
 	IDS_HELP_TITLE					"Hilfe"
 	IDS_BINDING_HELP 				"So binden Sie einen Befehl:\n\n * Klicken Sie auf die Schaltfläche neben dem Befehl, den Sie binden möchten. Diese Schaltfläche zeigt die aktuell zugewiesene Taste an.\n\n * Wenn das Popup-Fenster erscheint, drücken und lassen Sie die Taste und/oder Maustaste los,\n die Sie diesem Befehl zuweisen möchten. Zum Beispiel: Wenn Sie die Schaltfläche neben\n 'vorwärts' drücken und die W-Taste betätigen, wird diese zur neuen Vorwärts-Taste.\n\n * Modifikatortasten wie Shift, Alt und Strg können in Kombination mit der Haupttaste verwendet werden (Beispiel: W+Shift).\n\n * Wenn Sie nur die Modifikatortaste eines Befehls ändern möchten, drücken Sie die mit '+' markierte Schaltfläche\n neben der Bindungsschaltfläche und wählen Sie eine Modifikatortaste aus der angezeigten Liste aus.\n\n * Die 'Beliebig'-Modifikation bedeutet, dass jede Modifikatortaste zusammen mit der Taste gedrückt werden kann,\n und sie wird dennoch funktionieren. Zum Beispiel bedeutet W+beliebig, dass W+Shift, W+Alt, W+Strg und nur W den Befehl ausführen.\n\n * Falls Sie einen Fehler machen, können Sie die Schaltfläche 'Standardwerte wiederherstellen' drücken, um alle Bindungen\n auf die Standardwerte zurückzusetzen.\n\n * Wenn Sie Ihre Einstellungen abgeschlossen haben, drücken Sie 'OK', um zu speichern und zu beenden.\n Oder Sie können 'Abbrechen' drücken, um zu beenden, ohne Ihre Änderungen zu speichern."
@@ -2406,6 +2410,7 @@ END
 
 IDD_MSGBOX DIALOG 0, 0, 236, 50
 STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
 FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,74,32,44,14
@@ -3321,6 +3326,7 @@ END
 STRINGTABLE
 BEGIN
 	IDS_WARNING_TITLE			    "Warning"
+	IDS_ERROR_TITLE				    "Meridian 59 - Error"
     IDS_SOFTWARERENDERER_WARN		"Software renderer may have been activated due to a problem with your video setup.\n\n\t\t Disabling may cause the game not to run."
 	IDS_HELP_TITLE					"Help"
 	IDS_BINDING_HELP 				"To bind a command:\n\n * Click on the button next to the command you want to bind. This button will\n show the key currently bound to the command.\n\n * When the popup appears, press and release the key and/or mouse button\n you want to bind to that command. For example, pressing the button next to\n 'forward' and pressing the W key will make that the new walk forward key.\n\n * Modifier keys such as shift, alt, control may be used in combination with the\n main key when binding a command (example: W+shift).\n\n * If you wish to change only the modifier key of a command, press the button\n marked with a '+' next to the binding button and select a modifier key from\n the list shown.\n\n * The 'Any' modifier means that any modifier key can be pressed with the key\n and it will still work. So, W+any means that W+shift, W+alt, W+ctrl, and just\n W will do the specified command.\n\n * If you make a mistake you may press the 'Restore Defaults' button and all of\n the bindings will be set to the default.\n\n * Once you have finished your settings, press 'OK' to save and quit. Or you\n can press 'Cancel' to quit without saving your changes."
