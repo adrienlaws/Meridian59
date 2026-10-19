@@ -242,14 +242,22 @@ INT_PTR CALLBACK WhoDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
  */
 void MessageSaid(ID sender_id, ID sender_name, BYTE say_type, char *message)
 {
+  // A say carries the name the sender appears under, which is not their own
+  // name while they are anonymous or morphed.  The ignore list holds real
+  // names, so match on the sender's real name instead.
+  ID ignore_name = CurrentUserName(sender_id);
+
+  if (ignore_name == 0)
+    ignore_name = sender_name;
+
    // Always let non-player says through; check others for blocking
   if (say_type != SAY_RESOURCE && sender_id != player.id && 
-      (config.ignore_all || IsUserInIgnoreList(sender_name) ||
+      (config.ignore_all || IsUserInIgnoreList(ignore_name) ||
        (say_type == SAY_EVERYONE && config.no_broadcast)))
   {
     // If we blocked a "send" to us, tell server so
     if (say_type == SAY_GROUP && 
-        (IsUserInIgnoreList(sender_name) || config.ignore_all))
+        (IsUserInIgnoreList(ignore_name) || config.ignore_all))
       SendSayBlocked(sender_id);
     return;
   }

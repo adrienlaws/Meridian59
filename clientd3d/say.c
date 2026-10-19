@@ -35,6 +35,20 @@ void SetCurrentUsers(list_type users)
 }
 /*****************************************************************************/
 /*
+* CurrentUserName:  Return the name resource of the logged on user with the
+*   given id, or 0 when no logged on user has that id.
+*   The list holds the name each user really has, which is not always the name
+*   they currently appear under.
+*/
+ID CurrentUserName(ID user_id)
+{
+	object_node *user = (object_node *) list_find_item(current_users, (void *) user_id,
+		CompareIdObject);
+
+	return (user != NULL) ? user->name_res : 0;
+}
+/*****************************************************************************/
+/*
 * AddCurrentUser:  Add user to list of current users
 */
 void AddCurrentUser(object_node *user)
