@@ -66,7 +66,6 @@ client_def_table_type client_def_table[] =
 	{ BP_POST_ARTICLE,         { {2, TAG_INT}, {0, TAG_STRING}, {0, TAG_STRING}, {0, DONE_PARM} } },
 	{ BP_REQ_ADMIN,            { {0, TAG_TEMP_STRING}, {0, DONE_PARM} } },
 	{ BP_ACTION,               { {1, TAG_INT}, {0, DONE_PARM} } },
-	{ BP_SAY_BLOCKED,          { {4, TAG_OBJECT}, {0, DONE_PARM} } },
 	{ BP_REQ_LOOKUP_NAMES,     { {2, TAG_INT}, {0, TAG_TEMP_STRING}, {0, DONE_PARM} } },
 	{ BP_CHANGE_DESCRIPTION,   { {4, TAG_OBJECT}, {0, TAG_STRING}, {0, DONE_PARM} } },
 	{ BP_REQ_QUIT,             { {0, DONE_PARM} } },

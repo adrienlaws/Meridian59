@@ -1302,14 +1302,6 @@ messages:
          return;
       }
 
-      if liClient_cmd = BP_SAY_BLOCKED
-      {
-         oWhat = Nth(client_msg,2);
-         Send(self,@UserBlockedSend,#what=oWhat);
-         
-         return;
-      }
-
       if liClient_cmd = BP_REQ_LOOKUP_NAMES
       {
          Send(self,@UserLookupNames,#amount=Nth(client_msg,2),
@@ -3741,14 +3733,6 @@ messages:
 
       Send(self,@NewHold,#what=what);
       
-      return;
-   }
-
-   UserBlockedSend(what = $)
-   "Sent by client when they're blocking messages from a user, and that "
-   "user Sends a message."
-   {
-
       return;
    }
 

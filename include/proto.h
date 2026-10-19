@@ -81,7 +81,6 @@ enum {
    BP_SEND_STAT_GROUPS      = 52,
    BP_SEND_ENCHANTMENTS     = 53,
    BP_REQ_QUIT              = 54,
-   BP_SAY_BLOCKED           = 55,
    BP_CHARINFO_OK           = 56,
    BP_CHARINFO_NOT_OK       = 57,
    BP_LOAD_MODULE           = 58,

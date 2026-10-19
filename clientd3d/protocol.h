@@ -104,7 +104,6 @@ ToServer(BP_REQ_MOVE, NULL, FinenessClientToKod(y) + KOD_FINENESS, \
 #define RequestCast(id, objs)        ToServer(BP_REQ_CAST, NULL, id, objs)
 #define RequestTurn(obj, angle)      ToServer(BP_REQ_TURN, NULL, obj, angle)
 #define RequestAction(action)        ToServer(BP_ACTION, NULL, action)
-#define SendSayBlocked(id)           ToServer(BP_SAY_BLOCKED, NULL, id)
 #define RequestChangeDescription(id, str) ToServer(BP_CHANGE_DESCRIPTION, NULL, id, str)
 #define RequestActivate(id)          ToServer(BP_REQ_ACTIVATE, NULL, id)
 #define RequestGamePing()            ToServer(BP_PING, NULL)

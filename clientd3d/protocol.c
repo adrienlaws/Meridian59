@@ -68,7 +68,6 @@ static client_message game_msg_table[] = {
 { BP_SEND_ROOM_CONTENTS,   { PARAM_END }, },
 { BP_SEND_OBJECT_CONTENTS, { PARAM_ID, PARAM_END }, },
 { BP_ACTION,               { PARAM_BYTE, PARAM_END }, },
-{ BP_SAY_BLOCKED,          { PARAM_ID, PARAM_END }, },
 { BP_LOGOFF,               { PARAM_END }, },
 { BP_CHANGE_DESCRIPTION,   { PARAM_ID, PARAM_STRING, PARAM_END }, },
 { BP_CHANGE_PASSWORD,      { PARAM_STRING, PARAM_STRING, PARAM_END }, },

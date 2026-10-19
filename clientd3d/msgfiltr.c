@@ -255,10 +255,6 @@ void MessageSaid(ID sender_id, ID sender_name, BYTE say_type, char *message)
       (config.ignore_all || IsUserInIgnoreList(ignore_name) ||
        (say_type == SAY_EVERYONE && config.no_broadcast)))
   {
-    // If we blocked a "send" to us, tell server so
-    if (say_type == SAY_GROUP && 
-        (IsUserInIgnoreList(ignore_name) || config.ignore_all))
-      SendSayBlocked(sender_id);
     return;
   }
   
