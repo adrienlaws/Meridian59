@@ -129,6 +129,14 @@ messages:
       }
       else
       {
+         % The room plays one song at a time.  End the quieter one first, and
+         % quietly, so it does not announce itself or reset the room music over
+         % the song starting here.
+         if iJalaInfo <> $
+         {
+            Send(oRoom,@RemoveEnchantment,#what=Nth(iJalaInfo,2),#report=FALSE);
+         }
+
          Send(oRoom,@RoomStartEnchantment,#what=self,
               #state=Send(self,@BuildState,#thisVolume=thisVolume,#who=who,
                           #iSpellPower=iSpellPower),
@@ -278,7 +286,7 @@ messages:
       return;
    }
 
-   EndSpell(where=$, state=$)  
+   EndSpell(where=$, state=$, report=TRUE)
    "Called by room when spell expires."
    {
       local oCaster, lActive, each_obj, oRoom, i;
@@ -300,12 +308,15 @@ messages:
          }
       }
 
-      Send(where,@SomeoneSaid,#type=SAY_MESSAGE,#string=jala_song_ends,
-           #what=self);
-
       Send(oCaster,@ClearTranceFlag);
-      % Send to room: restart the background music.
-      Post(oRoom,@ResendRoomBackgroundMusic);
+
+      if report
+      {
+         Send(where,@SomeoneSaid,#type=SAY_MESSAGE,#string=jala_song_ends,
+              #what=self);
+         % Send to room: restart the background music.
+         Post(oRoom,@ResendRoomBackgroundMusic);
+      }
       
       propagate;
    }
