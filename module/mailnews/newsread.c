@@ -153,6 +153,7 @@ INT_PTR CALLBACK ReadNewsDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPAR
 
       SetWindowFont(hEdit, GetFont(FONT_MAIL), FALSE);
       SetWindowFont(hList, GetFont(FONT_MAIL), FALSE);
+      RichEditMatchDialogColors(hEdit);
 
       /* Store dialog rectangle in case of resize */
       GetWindowRect(hDlg, &dlg_rect);

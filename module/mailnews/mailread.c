@@ -103,6 +103,7 @@ INT_PTR CALLBACK ReadMailDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPAR
       hEdit = GetDlgItem(hDlg, IDC_MAILEDIT);
       hList = GetDlgItem(hDlg, IDC_MAILLIST);
       SendMessage(hDlg, BK_SETDLGFONTS, 0, 0);
+      RichEditMatchDialogColors(hEdit);
 
       ListView_SetExtendedListViewStyleEx(hList, LVS_EX_FULLROWSELECT,
                                           LVS_EX_FULLROWSELECT);
@@ -167,6 +168,7 @@ INT_PTR CALLBACK ReadMailDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPAR
    case BK_SETDLGCOLORS:
       ListView_SetTextColor(hList, GetColor(COLOR_LISTFGD));
       ListView_SetBkColor(hList, GetColor(COLOR_LISTBGD));
+      RichEditMatchDialogColors(hEdit);
       InvalidateRect(hDlg, NULL, TRUE);
       return TRUE;
 

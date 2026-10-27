@@ -574,6 +574,38 @@ HBRUSH DialogCtlColor(HWND hwnd, HDC hdc, HWND hwndChild, int type)
 }
 /****************************************************************************/
 /*
+* RichEditMatchDialogColors:  Gives a Rich Edit control the background and
+*   text colors its dialog gives a plain edit box in the same read-only state.
+*   Rich Edit ignores WM_CTLCOLOREDIT and WM_CTLCOLORSTATIC.  This sends the
+*   dialog the message a plain edit box would send, then applies the colors
+*   set on the DC.
+*/
+void RichEditMatchDialogColors(HWND hwnd)
+{
+	bool read_only = (SendMessage(hwnd, EM_GETOPTIONS, 0, 0) & ECO_READONLY) != 0;
+
+	// A read-only plain edit box sends WM_CTLCOLORSTATIC instead.
+	HDC hdc = GetDC(hwnd);
+	if (read_only)
+		FORWARD_WM_CTLCOLORSTATIC(GetParent(hwnd), hdc, hwnd, SendMessage);
+	else
+		FORWARD_WM_CTLCOLOREDIT(GetParent(hwnd), hdc, hwnd, SendMessage);
+	COLORREF text_color = GetTextColor(hdc);
+	COLORREF back_color = GetBkColor(hdc);
+	ReleaseDC(hwnd, hdc);
+
+	SendMessage(hwnd, EM_SETBKGNDCOLOR, FALSE, back_color);
+
+	CHARFORMAT cformat;
+	memset(&cformat, 0, sizeof(cformat));
+	cformat.cbSize = sizeof(cformat);
+	cformat.dwMask = CFM_COLOR;
+	cformat.crTextColor = text_color;
+	SendMessage(hwnd, EM_SETCHARFORMAT, SCF_DEFAULT, (LPARAM) &cformat);
+	SendMessage(hwnd, EM_SETCHARFORMAT, SCF_ALL, (LPARAM) &cformat);
+}
+/****************************************************************************/
+/*
 * GetItemListColor:  Get given color id # for given owner-drawn list box.
 *    (Inventory has different colors than popup dialog lists)
 *    Doesn't return color itself so that caller can use id to call GetBrush.

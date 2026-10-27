@@ -43,7 +43,7 @@ void EditBoxCreate(HWND hParent)
    /* Don't use WS_VISIBLE style here--create window large enough so that 
     * scroll bar will be drawn, then size for real & make visible in ResizeEditBox.
     */
-   hwndText = CreateWindowEx(0, "richedit", NULL, 
+   hwndText = CreateWindowEx(0, "RichEdit20A", NULL,
 			   WS_CHILD | WS_VSCROLL | WS_VISIBLE |
 			   ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL,
 			   0, 0, 0, 0, 

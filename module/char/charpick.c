@@ -157,6 +157,7 @@ INT_PTR CALLBACK PickCharDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPAR
       
       // Show message of the day
       Edit_SetText(GetDlgItem(hDlg, IDC_MOTD), info->motd);  
+      RichEditMatchDialogColors(GetDlgItem(hDlg, IDC_MOTD));
       
       // Display advertisements
       for (i = 0; i < info->num_ads; i++)

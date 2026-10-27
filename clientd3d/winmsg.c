@@ -128,7 +128,7 @@ BOOL MainInit(HWND hwnd, LPCREATESTRUCT lpCreateStruct)
 	MenuDisplaySettings(hwnd);
 	
 	// Load rich edit control DLL and common controls
-	hRichEditLib = LoadLibrary("riched32.dll");
+	hRichEditLib = LoadLibrary("riched20.dll");
 	InitCommonControls();
 	
 	AudioInit(hwnd);

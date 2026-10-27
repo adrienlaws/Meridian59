@@ -67,6 +67,7 @@ EXPORTS
 	WindowBeginUpdate
 	WindowEndUpdate
 	DialogCtlColor
+	RichEditMatchDialogColors
 	MakeDirectory
 	GetString
 	AreaToRect
