@@ -4891,8 +4891,8 @@ messages:
       if IsClass(what,&Monster)
       {         
          Send(self,@AddKarma,#amount=Send(self,@CalculateKarmaChangeFromKill,
-              #karma_victim=Send(what,@GetKarma),#karma_killer=Send(self,@GetKarma)),
-              #bIsMob=TRUE);
+              #karma_victim=Send(what,@GetKarma),#karma_killer=Send(self,@GetKarma),
+              #bIsMob=TRUE));
       }
 
       Send(what,@Killed,#what=self,#stroke_obj=stroke_obj);
