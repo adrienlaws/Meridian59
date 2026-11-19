@@ -56,9 +56,15 @@ messages:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       
    ModifyDamage(damage = 0, target = $, wielder = $, lData= $)
-   "Wielder has a 1% chance of twisting target with any hit."
+   "Wielder has a 1% chance of twisting target with any hit.  "
+   "No effect without a target."
    {
       local oRoom;
+
+      if target = $
+      {
+         return damage;
+      }
 
       if random(1,100) <= piEffect_percent
       {

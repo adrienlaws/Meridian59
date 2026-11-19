@@ -186,10 +186,16 @@ messages:
 
    ModifyDamage(damage = 0, target = $, wielder = $, lData = $)
    "If wielder is in the faction that matches the state of the weapon, "
-   "and opponent is in a different faction (but not unfactioned), then "
-   "do the damage bonus."
+   "and opponent is in a different faction, then do the damage bonus.  "
+   "Half bonus against an unfactioned opponent.  Returns damage "
+   "unchanged without a target."
    {
       local iTargetFaction, iWielderFaction, iWeaponFaction, iPower;
+
+      if target = $
+      {
+         return damage;
+      }
 
       if lData = $
       {
@@ -221,10 +227,16 @@ messages:
 
    ModifyHitRoll(hitroll = 0, target = $, wielder = $, lData = $)
    "If wielder is in the faction that matches the state of the weapon, "
-   "and opponent is in a different faction (but not unfactioned), then "
-   "do the damage bonus."
+   "and opponent is in a different faction, then do the hit roll bonus.  "
+   "Half bonus against an unfactioned opponent.  Returns hitroll "
+   "unchanged without a target."
    {
       local iTargetFaction, iWielderFaction, iWeaponFaction, iPower;
+
+      if target = $
+      {
+         return hitroll;
+      }
 
       if lData = $
       {

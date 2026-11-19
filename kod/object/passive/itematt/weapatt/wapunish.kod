@@ -72,10 +72,17 @@ messages:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       
    ModifyDamage(damage = 0, target = $, wielder = $, lData= $)
-   "Wielder gets a damage bonus, equal to (proficiency/4) - 2."
+   "Wielder gets a damage bonus against a murderer or an outlaw, and a "
+   "penalty against any other player.  No change against a monster or "
+   "without a target."
    {
       local iPower;
-          
+
+      if target = $
+      {
+         return damage;
+      }
+
       %% here, iNum = power itself
       iPower = send(self,@TranslatePowerFromCompound,#iCompound=first(lData));
       iPower = send(self,@DecipherDamageFromPower,#iPower=iPower);
@@ -102,10 +109,17 @@ messages:
    }
 
    ModifyHitRoll(hitroll = 0, target = $, wielder = $, lData= $)
-   "Wielder gets a hit bonus based on whether or not the target is a murderer or outlaw."
+   "Wielder gets a hit bonus against a murderer or an outlaw, and a "
+   "penalty against any other player.  No change against a monster or "
+   "without a target."
    {
       local iPower;
-          
+
+      if target = $
+      {
+         return hitroll;
+      }
+
       %% here, iNum = power itself
       iPower = send(self,@TranslatePowerFromCompound,#iCompound=first(lData));
       iPower = send(self,@DecipherHitRollFromPower,#iPower=iPower);

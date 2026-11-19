@@ -72,9 +72,16 @@ messages:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       
    ModifyDamage(damage = 0, target = $, wielder = $, lData= $)
-   "Wielder has a 1% chance of blinding target with any hit."
+   "Wielder has a 1% chance of blinding target with any hit.  "
+   "No effect without a target."
    {
       local oSpell;
+
+      if target = $
+      {
+         return damage;
+      }
+
       if random(1,100) < piEffect_percent
       {
          oSpell = send(SYS,@FindSpellByNum,#num=SID_blind);

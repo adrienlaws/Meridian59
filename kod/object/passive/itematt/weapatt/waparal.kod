@@ -55,9 +55,15 @@ messages:
    %%% Effect Functions
       
    ModifyDamage(damage = 0, target = $, wielder = $, lData= $)
-   "Wielder has a chance of paralyzing target with any hit."
+   "Wielder has a chance of paralyzing target with any hit.  "
+   "No effect without a target."
    {
       local oSpell;
+
+      if target = $
+      {
+         return damage;
+      }
 
       if random(1,100) <= piEffect_percent
       {

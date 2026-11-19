@@ -91,6 +91,10 @@ messages:
    }
 
    ModifyDefensePower(who = $, what = $,defense_power = $)
+   "Returns defense_power unchanged, and paralyzes the attacker.  A "
+   "revenant is not paralyzed, and a player attacker with a ranged "
+   "weapon escapes about half the time.  No effect when the attacker is "
+   "the enchanted player, or without an attacker."
    {
       local iSpellpower, oSpell, iDuration, oWeapon;
    
@@ -100,6 +104,11 @@ messages:
       iDuration = bound(iDuration,500,2500);
 
       % TODO: Make chance to paralyze based on if caster is facing opponent?
+
+      if what = $
+      {
+         return defense_power;
+      }
 
       % An evil twin asks its original for its defense, so a caster who
       % attacks their own twin arrives here as the attacker.

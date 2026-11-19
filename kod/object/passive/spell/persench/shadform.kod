@@ -127,13 +127,16 @@ messages:
    }
 
    ModifyDefensePower(who = $, what = $,defense_power = $)
+   "Returns defense_power plus a bonus that grows as the room gets "
+   "darker.  A player attacker's own light lowers the bonus.  Without an "
+   "attacker, only the room light counts."
    {
       local iLight,iShadowbonus;
 
       iLight = send(send(who,@GetOwner),@GetRoomLight);
 
       % A player attacker's light determines how well they can see the enchanted, too.
-      if isClass(what,&Player)
+      if what <> $ AND isClass(what,&Player)
       {
          iLight =  iLight + send(what,@GetPlayerLightLevel);
       }

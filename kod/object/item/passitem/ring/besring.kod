@@ -96,6 +96,10 @@ messages:
    }
 
    ModifyHitRoll(who = $, what = $, hit_roll = $)
+   "Returns hit_roll lowered by a random amount, or unchanged for a "
+   "wielder of a ranged weapon.  Each lowered hit roll against an "
+   "opponent uses one charge, and the last charge destroys the ring.  "
+   "Without an opponent, no charge is used."
    {
       local oWeapon;
 
@@ -103,7 +107,10 @@ messages:
 
       if oWeapon = $ OR NOT IsClass(oWeapon,&RangedWeapon)
       {
-         piHits = piHits - 1;
+         if what <> $
+         {
+            piHits = piHits - 1;
+         }
 
          if piHits <= 0
          {

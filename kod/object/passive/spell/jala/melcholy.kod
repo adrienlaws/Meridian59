@@ -148,7 +148,14 @@ messages:
    % Stuff we handle to be an attack modifier.
 
    ModifyHitRoll(who = $,what = $,hit_roll = $)
+   "Returns hit_roll plus 100 against a target with positive karma.  "
+   "Returns hit_roll unchanged against any other target, or without one."
    {
+      if what = $
+      {
+         return hit_roll;
+      }
+
       % Only affect the good ones...
       if Send(what,@GetKarma,#detect=TRUE) > 0
       {
@@ -160,7 +167,14 @@ messages:
    }
    
    ModifyDamage(who = $,what = $,damage = $)
+   "Returns damage plus 1 to 5 against a target with positive karma.  "
+   "Returns damage unchanged against any other target, or without one."
    {
+      if what = $
+      {
+         return damage;
+      }
+
       % Only affect the good ones...
       if Send(what,@GetKarma,#detect=TRUE) > 0
       {

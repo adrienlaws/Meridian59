@@ -67,10 +67,16 @@ Constructor()
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       
    ModifyDamage(damage = 0, target = $, wielder = $, lData= $)
-   "Wielder has a chance of affecting the target with the given spell."
+   "Wielder has a chance of affecting the target with the given spell.  "
+   "No effect without a target."
    {
       local oSpell;
       
+      if target = $
+      {
+         return damage;
+      }
+
       if (random(1,100) <= ((100-nth(lData,3))/10)) and send(wielder,@CheckPlayerFlag,#flag=PFLAG_PKILL_ENABLE)
       {
          oSpell = nth(lData,2);

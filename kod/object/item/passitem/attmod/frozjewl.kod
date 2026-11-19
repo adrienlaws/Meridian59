@@ -62,8 +62,16 @@ properties:
 messages:
 
    ModifyHitRoll(who = $, what = $, hit_roll = $, stroke_obj = $)
+   "Returns hit_roll plus 150 for a spell and plus 50 for any other "
+   "attack.  Each hit roll against an opponent uses one charge.  The "
+   "last charge breaks the jewel and returns hit_roll unchanged.  "
+   "Without an opponent, no charge is used."
    {
-      piHits = piHits - 1;
+      if what <> $
+      {
+         piHits = piHits - 1;
+      }
+
       if piHits <= 0
       {
          Send(poOwner,@MsgSendUser,#message_rsc=frozjewel_broken,
@@ -76,7 +84,7 @@ messages:
          return hit_roll;
       }
 
-      if IsClass(stroke_obj,&Spell)
+      if stroke_obj <> $ AND IsClass(stroke_obj,&Spell)
       {
          Send(self,@DoFlash);
       
