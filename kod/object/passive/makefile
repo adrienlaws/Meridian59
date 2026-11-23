@@ -10,7 +10,7 @@ BOFS = tree.bof spell.bof boulder.bof news.bof trestype.bof arsign01.bof \
 	fountain.bof tombston.bof stool.bof table.bof shrub.bof sngltree.bof \
 	bank.bof sign-ar.bof sign-ar2.bof barstool.bof sign.bof \
 	sickness.bof skill.bof treeoak.bof treepine.bof newslink.bof decoitem.bof \
-	mananode.bof lever.bof trance.bof switch.bof guild.bof guildcmd.bof \
+	mananode.bof lever.bof roomflag.bof trance.bof switch.bof guild.bof guildcmd.bof \
 	gldlever.bof brain.bof quillpen.bof sun.bof moon.bof asssign.bof\
         tallbush.bof dispensr.bof fountjet.bof gstlever.bof \
         farytree.bof itematt.bof quest.bof questnode.bof storage.bof \

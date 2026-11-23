@@ -1,0 +1,94 @@
+% Meridian 59, Copyright 1994-2012 Andrew Kirmse and Chris Kirmse.
+% All rights reserved.
+%
+% This software is distributed under a license that is described in
+% the LICENSE file that accompanies it.
+%
+% Meridian is a registered trademark.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+RoomFlagIcon is PassiveObject
+
+constants:
+
+   include blakston.khd
+
+resources:
+
+   roomflag_icon_rsc = somethin.bgf
+
+   roomflag_unknown = "Room flag"
+   roomflag_safe_death = "Room flag: safe death"
+   roomflag_no_combat = "Room flag: no combat"
+   roomflag_no_pk = "Room flag: no player killing"
+   roomflag_guild_pk_only = "Room flag: guild player killing only"
+   roomflag_no_magic = "Room flag: no magic"
+   roomflag_hometown = "Room flag: hometown"
+   roomflag_lamps = "Room flag: lamps"
+   roomflag_sanctuary = "Room flag: sanctuary"
+   roomflag_spell_power = "Room flag: spell power modified"
+   roomflag_kill_zone = "Room flag: kill zone"
+   roomflag_guest_area = "Room flag: guest area"
+   roomflag_hard_learn = "Room flag: hard to learn"
+   roomflag_safelogoff = "Room flag: safe logoff"
+   roomflag_triple_heal = "Room flag: triple heal"
+   roomflag_jig = "Room flag: jig"
+   roomflag_no_mob_combat = "Room flag: no monster combat"
+
+classvars:
+
+   vrIcon = roomflag_icon_rsc
+
+properties:
+
+   vrName = roomflag_unknown
+   piFlag = 0
+
+messages:
+
+   Constructor(flag = 0)
+   {
+      piFlag = flag;
+      vrName = Send(self,@GetFlagName,#flag=flag);
+
+      propagate;
+   }
+
+   GetFlagName(flag = 0)
+   "Returns the name shown on the icon for one room flag bit."
+   {
+      if flag = ROOM_SAFE_DEATH { return roomflag_safe_death; }
+      if flag = ROOM_NO_COMBAT { return roomflag_no_combat; }
+      if flag = ROOM_NO_PK { return roomflag_no_pk; }
+      if flag = ROOM_GUILD_PK_ONLY { return roomflag_guild_pk_only; }
+      if flag = ROOM_NO_MAGIC { return roomflag_no_magic; }
+      if flag = ROOM_HOMETOWN { return roomflag_hometown; }
+      if flag = ROOM_LAMPS { return roomflag_lamps; }
+      if flag = ROOM_SANCTUARY { return roomflag_sanctuary; }
+      if flag = ROOM_SPELL_POWER_MODIFIED { return roomflag_spell_power; }
+      if flag = ROOM_KILL_ZONE { return roomflag_kill_zone; }
+      if flag = ROOM_GUEST_AREA { return roomflag_guest_area; }
+      if flag = ROOM_HARD_LEARN { return roomflag_hard_learn; }
+      if flag = ROOM_SAFELOGOFF { return roomflag_safelogoff; }
+      if flag = ROOM_TRIPLE_HEAL { return roomflag_triple_heal; }
+      if flag = ROOM_JIG { return roomflag_jig; }
+      if flag = ROOM_NO_MOB_COMBAT { return roomflag_no_mob_combat; }
+
+      return roomflag_unknown;
+   }
+
+   GetFlag()
+   {
+      return piFlag;
+   }
+
+   ShowEnchantmentIcon(type = $)
+   "Returns TRUE.  A room flag icon always shows to the DM it is sent to."
+   {
+      return TRUE;
+   }
+
+
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

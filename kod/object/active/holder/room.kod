@@ -1136,8 +1136,11 @@ messages:
    }
 
    SetRoomFlag(flag=0, value=FALSE)
-   "This always requires the POSITIVE flag name."
+   "This always requires the POSITIVE flag name.  A DM in the room sees "
+   "the flag's icon added or removed when the flag changes."
    {
+      local iOld_flags = piRoom_Flags;
+
       if NOT Value
       {
          piRoom_Flags=piRoom_Flags & ~flag;
@@ -1145,6 +1148,11 @@ messages:
       else
       {
          piRoom_Flags=piRoom_Flags | flag ;
+      }
+
+      if iOld_flags <> piRoom_Flags
+      {
+         Send(self,@UpdateRoomFlagIcons,#flag=flag);
       }
 
       return;
@@ -1858,6 +1866,59 @@ messages:
       {
          each_obj = Nth(i,2);
          Send(what,@ShowAddEnchantment,#what=each_obj,#type=ENCHANTMENT_ROOM);
+      }
+
+      if IsClass(what,&DM)
+      {
+         Send(self,@SendRoomFlagIcons,#who=what);
+      }
+
+      return;
+   }
+
+   SendRoomFlagIcons(who = $)
+   "Shows a DM one area enchantment icon for each room flag that is set."
+   {
+      local i;
+
+      for i in Send(SYS,@GetRoomFlagIcons)
+      {
+         if piRoom_Flags & Send(i,@GetFlag)
+         {
+            Send(who,@ShowAddEnchantment,#what=i,#type=ENCHANTMENT_ROOM);
+         }
+      }
+
+      return;
+   }
+
+   UpdateRoomFlagIcons(flag = 0)
+   "Adds or removes the room flag icons for the bits in flag, for each DM "
+   "in the room."
+   {
+      local i, j;
+
+      for i in plActive
+      {
+         if IsClass(First(i),&DM)
+         {
+            for j in Send(SYS,@GetRoomFlagIcons)
+            {
+               if flag & Send(j,@GetFlag)
+               {
+                  if piRoom_Flags & Send(j,@GetFlag)
+                  {
+                     Send(First(i),@ShowAddEnchantment,#what=j,
+                          #type=ENCHANTMENT_ROOM);
+                  }
+                  else
+                  {
+                     Send(First(i),@ShowRemoveEnchantment,#what=j,
+                          #type=ENCHANTMENT_ROOM);
+                  }
+               }
+            }
+         }
       }
 
       return;

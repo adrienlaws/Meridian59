@@ -246,6 +246,9 @@ classvars:
 properties:
 
    plRooms = $
+
+   % One RoomFlagIcon per room flag bit, made on first use
+   plRoomFlagIcons = $
    plUsers = $
    plUsers_logged_on = $
    plTreasure_types = $
@@ -1421,6 +1424,26 @@ messages:
    GetRooms()
    {
       return plRooms;
+   }
+
+   GetRoomFlagIcons()
+   "Returns one RoomFlagIcon object for each room flag bit.  Makes them "
+   "the first time it runs."
+   {
+      local iFlag;
+
+      if plRoomFlagIcons = $
+      {
+         iFlag = 0x8000;
+         while iFlag > 0
+         {
+            plRoomFlagIcons = Cons(Create(&RoomFlagIcon,#flag=iFlag),
+                                   plRoomFlagIcons);
+            iFlag = iFlag / 2;
+         }
+      }
+
+      return plRoomFlagIcons;
    }
 
    FindUserByString(string = $)
