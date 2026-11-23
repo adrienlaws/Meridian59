@@ -22,7 +22,7 @@ resources:
       "Creates a ring of flames around target.  "
       "Requires red mushrooms and firesand to cast."
 
-   RingOfFlames_caster = "A blazing hot ring of flames appears around %s%q."
+   RingOfFlames_caster = "A blazing hot ring of flames appears around %s%s."
    RingOfFlames_target = "A blazing hot ring of flames appears around you!"
    RingOfFlames_failed_rsc = \
       "There is too much summoning magic focused here to create a ring of "
@@ -82,10 +82,10 @@ messages:
      }
 	  
 	 oTarget = First(lTargets);
-      Send(oTarget,@MsgSendUser,#message_rsc=RingOfFlames_target,
-		    #parm1=Send(oTarget,@GetCapDef),#parm2=Send(oTarget,@GetName));
+      Send(oTarget,@MsgSendUser,#message_rsc=RingOfFlames_target);
 	  
-      Send(who,@MsgSendUser,#message_rsc=RingOfFlames_caster);
+      Send(who,@MsgSendUser,#message_rsc=RingOfFlames_caster,
+		    #parm1=Send(oTarget,@GetDef),#parm2=Send(oTarget,@GetName));
 
       propagate;
    }
