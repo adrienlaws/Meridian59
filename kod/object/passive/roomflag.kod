@@ -17,6 +17,10 @@ constants:
 resources:
 
    roomflag_icon_rsc = somethin.bgf
+   roomflag_jig_icon_rsc = ijig.bgf
+   roomflag_no_magic_icon_rsc = iantimag.bgf
+   roomflag_no_combat_icon_rsc = itruce.bgf
+   roomflag_kill_zone_icon_rsc = ikillfel.bgf
 
    roomflag_unknown = "Room flag"
    roomflag_safe_death = "Room flag: safe death"
@@ -76,6 +80,19 @@ messages:
       if flag = ROOM_NO_MOB_COMBAT { return roomflag_no_mob_combat; }
 
       return roomflag_unknown;
+   }
+
+   GetIcon()
+   "Returns the icon for this flag.  A flag that matches a spell uses the "
+   "spell's icon.  The rest use the generic icon."
+   {
+      if piFlag = ROOM_JIG { return roomflag_jig_icon_rsc; }
+      if piFlag = ROOM_NO_MAGIC { return roomflag_no_magic_icon_rsc; }
+      if piFlag = ROOM_NO_COMBAT { return roomflag_no_combat_icon_rsc; }
+      if piFlag = ROOM_NO_MOB_COMBAT { return roomflag_no_combat_icon_rsc; }
+      if piFlag = ROOM_KILL_ZONE { return roomflag_kill_zone_icon_rsc; }
+
+      return vrIcon;
    }
 
    GetFlag()
